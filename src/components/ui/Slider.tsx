@@ -162,17 +162,20 @@ export function Slider({
         )}
 
         {/* Thumb */}
-        <motion.div
-          className={`
-            absolute top-1/2 -translate-y-1/2 -translate-x-1/2
-            w-4 h-4 rounded-full bg-white border-2 border-primary
-            shadow-sm
-            ${disabled ? '' : 'cursor-grab active:cursor-grabbing'}
-          `}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
           style={{ left: `${percentage}%` }}
-          whileHover={disabled ? {} : { scale: 1.1 }}
-          whileTap={disabled ? {} : { scale: 0.95 }}
-        />
+        >
+          <motion.div
+            className={`
+              w-4 h-4 rounded-full bg-white border-2 border-primary
+              shadow-sm
+              ${disabled ? '' : 'cursor-grab active:cursor-grabbing'}
+            `}
+            whileHover={disabled ? {} : { scale: 1.1 }}
+            whileTap={disabled ? {} : { scale: 0.95 }}
+          />
+        </div>
       </div>
     </div>
   )
@@ -287,19 +290,22 @@ export function RangeSlider({
 
         {/* Thumbs */}
         {[0, 1].map((thumb) => (
-          <motion.div
+          <div
             key={thumb}
-            className={`
-              absolute top-1/2 -translate-y-1/2 -translate-x-1/2
-              w-4 h-4 rounded-full bg-white border-2 border-primary
-              shadow-sm
-              ${disabled ? '' : 'cursor-grab active:cursor-grabbing'}
-            `}
+            className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
             style={{ left: `${percentages[thumb]}%` }}
             onMouseDown={handleMouseDown(thumb as 0 | 1)}
-            whileHover={disabled ? {} : { scale: 1.1 }}
-            whileTap={disabled ? {} : { scale: 0.95 }}
-          />
+          >
+            <motion.div
+              className={`
+                w-4 h-4 rounded-full bg-white border-2 border-primary
+                shadow-sm
+                ${disabled ? '' : 'cursor-grab active:cursor-grabbing'}
+              `}
+              whileHover={disabled ? {} : { scale: 1.1 }}
+              whileTap={disabled ? {} : { scale: 0.95 }}
+            />
+          </div>
         ))}
       </div>
     </div>

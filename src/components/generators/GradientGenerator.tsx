@@ -1,14 +1,21 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Copy, Trash2, RefreshCw, ChevronDown } from 'lucide-react'
+import { Plus, Copy, Trash2, RefreshCw, ChevronDown, Pipette } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Slider } from '../ui/Slider'
+import { Input } from '../ui/Input'
 import { Dropdown } from '../ui/Dropdown'
 import { useToast } from '../ui/Toast'
 import { usePaletteStore } from '../../stores/paletteStore'
 import { ColourStop } from '../../types/colour'
-import { copyToClipboard } from '../../utils/helpers'
+import { copyToClipboard, supportsEyeDropper } from '../../utils/helpers'
 import { generateRandomColour } from '../../utils/colour/harmony'
+import {
+  hexToHsl,
+  hslToHex,
+  isValidHex,
+  normaliseHex,
+} from '../../utils/colour/conversions'
 
 type GradientType = 'linear' | 'radial' | 'conic'
 
@@ -17,6 +24,192 @@ const gradientTypeOptions = [
   { value: 'radial', label: 'Radial' },
   { value: 'conic', label: 'Conic' },
 ]
+
+// Inline colour picker for gradient stops
+interface InlineColourPickerProps {
+  value: string
+  onChange: (hex: string) => void
+  paletteColours: { hex: string; name: string }[]
+  onClose: () => void
+}
+
+function InlineColourPicker({ value, onChange, paletteColours, onClose }: InlineColourPickerProps) {
+  const [hexInput, setHexInput] = useState(value)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const toast = useToast()
+  const hsl = hexToHsl(value)
+
+  useEffect(() => {
+    setHexInput(value)
+  }, [value])
+
+  // Draw the colour gradient canvas
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const width = canvas.width
+    const height = canvas.height
+
+    // Horizontal saturation gradient (white to full colour)
+    const satGradient = ctx.createLinearGradient(0, 0, width, 0)
+    satGradient.addColorStop(0, 'white')
+    satGradient.addColorStop(1, `hsl(${hsl.h}, 100%, 50%)`)
+
+    ctx.fillStyle = satGradient
+    ctx.fillRect(0, 0, width, height)
+
+    // Vertical lightness gradient (transparent to black)
+    const lightGradient = ctx.createLinearGradient(0, 0, 0, height)
+    lightGradient.addColorStop(0, 'rgba(0,0,0,0)')
+    lightGradient.addColorStop(1, 'black')
+
+    ctx.fillStyle = lightGradient
+    ctx.fillRect(0, 0, width, height)
+  }, [hsl.h])
+
+  const handleCanvasClick = useCallback(
+    (e: React.MouseEvent<HTMLCanvasElement>) => {
+      const canvas = canvasRef.current
+      if (!canvas) return
+
+      const rect = canvas.getBoundingClientRect()
+      const x = e.clientX - rect.left
+      const y = e.clientY - rect.top
+
+      const saturation = Math.round((x / rect.width) * 100)
+      const lightness = Math.round(100 - (y / rect.height) * 100)
+
+      const newHex = hslToHex({
+        h: hsl.h,
+        s: Math.min(100, Math.max(0, saturation)),
+        l: Math.min(100, Math.max(0, lightness / 2 + 25)),
+      })
+
+      onChange(newHex)
+    },
+    [hsl.h, onChange]
+  )
+
+  const handleHueChange = (h: number) => {
+    const newHex = hslToHex({ ...hsl, h })
+    onChange(newHex)
+  }
+
+  const handleHexSubmit = () => {
+    if (isValidHex(hexInput)) {
+      const normalised = normaliseHex(hexInput)
+      onChange(normalised)
+    } else {
+      toast.error('Invalid hex colour')
+      setHexInput(value)
+    }
+  }
+
+  const handleEyeDropper = async () => {
+    if (!supportsEyeDropper()) {
+      toast.error('EyeDropper not supported in this browser')
+      return
+    }
+
+    try {
+      // @ts-expect-error EyeDropper API types
+      const eyeDropper = new window.EyeDropper()
+      const result = await eyeDropper.open()
+      onChange(result.sRGBHex)
+      toast.success('Colour picked')
+    } catch {
+      // User cancelled
+    }
+  }
+
+  return (
+    <div className="p-3 bg-muted/30 space-y-3">
+      {/* Canvas picker */}
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={280}
+          height={120}
+          className="w-full h-28 rounded-lg cursor-crosshair border border-border"
+          onClick={handleCanvasClick}
+        />
+        {/* Current colour indicator */}
+        <div
+          className="absolute w-3 h-3 rounded-full border-2 border-white shadow-md pointer-events-none"
+          style={{
+            backgroundColor: value,
+            left: `${hsl.s}%`,
+            top: `${100 - hsl.l * 2 + 50}%`,
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+      </div>
+
+      {/* Hue slider */}
+      <Slider
+        value={hsl.h}
+        onChange={handleHueChange}
+        min={0}
+        max={360}
+        step={1}
+        label="Hue"
+        gradient="linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)"
+      />
+
+      {/* Hex input and preview */}
+      <div className="flex gap-2">
+        <Input
+          value={hexInput}
+          onChange={(e) => setHexInput(e.target.value)}
+          onBlur={handleHexSubmit}
+          onKeyDown={(e) => e.key === 'Enter' && handleHexSubmit()}
+          className="font-mono uppercase flex-1 h-9"
+          maxLength={7}
+        />
+        <div
+          className="w-9 h-9 rounded-md border border-border flex-shrink-0"
+          style={{ backgroundColor: value }}
+        />
+        {supportsEyeDropper() && (
+          <Button variant="outline" size="icon" onClick={handleEyeDropper} className="h-9 w-9" title="Pick from screen">
+            <Pipette className="h-4 w-4" />
+          </Button>
+        )}
+      </div>
+
+      {/* Palette colours */}
+      {paletteColours.length > 0 && (
+        <div>
+          <p className="text-xs text-muted-foreground mb-2">From palette:</p>
+          <div className="flex flex-wrap gap-1.5">
+            {paletteColours.map((colour, index) => (
+              <button
+                key={index}
+                className={`w-7 h-7 rounded border border-border hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all ${
+                  colour.hex.toLowerCase() === value.toLowerCase() ? 'ring-2 ring-primary ring-offset-1' : ''
+                }`}
+                style={{ backgroundColor: colour.hex }}
+                onClick={() => onChange(colour.hex)}
+                title={`${colour.name} (${colour.hex})`}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Done button */}
+      <div className="flex justify-end pt-1">
+        <Button variant="outline" size="sm" onClick={onClose}>
+          Done
+        </Button>
+      </div>
+    </div>
+  )
+}
 
 export function GradientGenerator() {
   const { palettes, activePaletteId, addGradient } = usePaletteStore()
@@ -188,14 +381,7 @@ export function GradientGenerator() {
       {/* Colour stops */}
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <label className="text-sm font-medium">Colour Stops</label>
-            {paletteColours.length > 0 && (
-              <span className="text-xs text-muted-foreground">
-                Use colours from your palette
-              </span>
-            )}
-          </div>
+          <label className="text-sm font-medium">Colour Stops</label>
           <Button variant="outline" size="sm" onClick={handleAddStop}>
             <Plus className="h-3.5 w-3.5 mr-1" />
             Add Stop
@@ -246,24 +432,22 @@ export function GradientGenerator() {
                   className="rounded-lg border border-border bg-card overflow-hidden"
                 >
                   <div className="flex items-center gap-3 p-2">
-                    <div className="flex items-center gap-2 flex-1">
-                      <input
-                        type="color"
-                        value={stop.colour}
-                        onChange={(e) =>
-                          handleUpdateStop(originalIndex, { colour: e.target.value })
-                        }
-                        className="w-10 h-8 rounded cursor-pointer border-0"
-                      />
-                      <input
-                        type="text"
-                        value={stop.colour}
-                        onChange={(e) =>
-                          handleUpdateStop(originalIndex, { colour: e.target.value })
-                        }
-                        className="w-20 px-2 py-1 text-xs font-mono border border-border rounded bg-background"
-                      />
-                    </div>
+                    {/* Colour swatch button */}
+                    <button
+                      className={`w-10 h-8 rounded border-2 transition-all ${
+                        isExpanded ? 'border-primary' : 'border-border hover:border-muted-foreground'
+                      }`}
+                      style={{ backgroundColor: stop.colour }}
+                      onClick={() => setExpandedStopIndex(isExpanded ? null : originalIndex)}
+                      title="Click to edit colour"
+                    />
+
+                    {/* Hex value display */}
+                    <span className="text-xs font-mono text-muted-foreground uppercase w-16">
+                      {stop.colour}
+                    </span>
+
+                    <div className="flex-1" />
 
                     <div className="flex items-center gap-2">
                       <input
@@ -281,22 +465,20 @@ export function GradientGenerator() {
                       <span className="text-xs text-muted-foreground">%</span>
                     </div>
 
-                    {paletteColours.length > 0 && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => setExpandedStopIndex(isExpanded ? null : originalIndex)}
-                        title="Select from palette"
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      onClick={() => setExpandedStopIndex(isExpanded ? null : originalIndex)}
+                      title="Edit colour"
+                    >
+                      <motion.div
+                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        transition={{ duration: 0.2 }}
                       >
-                        <motion.div
-                          animate={{ rotate: isExpanded ? 180 : 0 }}
-                          transition={{ duration: 0.2 }}
-                        >
-                          <ChevronDown className="h-3.5 w-3.5" />
-                        </motion.div>
-                      </Button>
-                    )}
+                        <ChevronDown className="h-3.5 w-3.5" />
+                      </motion.div>
+                    </Button>
 
                     <Button
                       variant="ghost"
@@ -310,9 +492,9 @@ export function GradientGenerator() {
                     </Button>
                   </div>
 
-                  {/* Palette colour swatches */}
+                  {/* Inline colour picker */}
                   <AnimatePresence>
-                    {isExpanded && paletteColours.length > 0 && (
+                    {isExpanded && (
                       <motion.div
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
@@ -320,23 +502,12 @@ export function GradientGenerator() {
                         transition={{ duration: 0.2 }}
                         className="border-t border-border"
                       >
-                        <div className="p-2 bg-muted/30">
-                          <p className="text-xs text-muted-foreground mb-2">Select from palette:</p>
-                          <div className="flex flex-wrap gap-1.5">
-                            {paletteColours.map((colour, colourIndex) => (
-                              <button
-                                key={colourIndex}
-                                className="w-7 h-7 rounded border border-border hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all"
-                                style={{ backgroundColor: colour.hex }}
-                                onClick={() => {
-                                  handleUpdateStop(originalIndex, { colour: colour.hex })
-                                  setExpandedStopIndex(null)
-                                }}
-                                title={`${colour.name} (${colour.hex})`}
-                              />
-                            ))}
-                          </div>
-                        </div>
+                        <InlineColourPicker
+                          value={stop.colour}
+                          onChange={(hex) => handleUpdateStop(originalIndex, { colour: hex })}
+                          paletteColours={paletteColours}
+                          onClose={() => setExpandedStopIndex(null)}
+                        />
                       </motion.div>
                     )}
                   </AnimatePresence>

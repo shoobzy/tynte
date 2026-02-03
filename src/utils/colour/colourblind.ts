@@ -1,0 +1,281 @@
+import { RGB, ColourblindType } from '../../types/colour'
+import { hexToRgb, rgbToHex } from './conversions'
+
+/**
+ * Transformation matrices for different types of colour blindness
+ * Based on research by Machado, Oliveira, and Fernandes (2009)
+ */
+const colourblindMatrices: Record<ColourblindType, number[][]> = {
+  // Protanopia (red-blind) - complete
+  protanopia: [
+    [0.56667, 0.43333, 0.00000],
+    [0.55833, 0.44167, 0.00000],
+    [0.00000, 0.24167, 0.75833],
+  ],
+
+  // Deuteranopia (green-blind) - complete
+  deuteranopia: [
+    [0.62500, 0.37500, 0.00000],
+    [0.70000, 0.30000, 0.00000],
+    [0.00000, 0.30000, 0.70000],
+  ],
+
+  // Tritanopia (blue-blind) - complete
+  tritanopia: [
+    [0.95000, 0.05000, 0.00000],
+    [0.00000, 0.43333, 0.56667],
+    [0.00000, 0.47500, 0.52500],
+  ],
+
+  // Achromatopsia (complete colour blindness)
+  achromatopsia: [
+    [0.21260, 0.71520, 0.07220],
+    [0.21260, 0.71520, 0.07220],
+    [0.21260, 0.71520, 0.07220],
+  ],
+
+  // Protanomaly (red-weak) - partial
+  protanomaly: [
+    [0.81667, 0.18333, 0.00000],
+    [0.33333, 0.66667, 0.00000],
+    [0.00000, 0.12500, 0.87500],
+  ],
+
+  // Deuteranomaly (green-weak) - partial
+  deuteranomaly: [
+    [0.80000, 0.20000, 0.00000],
+    [0.25833, 0.74167, 0.00000],
+    [0.00000, 0.14167, 0.85833],
+  ],
+
+  // Tritanomaly (blue-weak) - partial
+  tritanomaly: [
+    [0.96667, 0.03333, 0.00000],
+    [0.00000, 0.73333, 0.26667],
+    [0.00000, 0.18333, 0.81667],
+  ],
+}
+
+/**
+ * Apply a colour blindness transformation matrix to an RGB colour
+ */
+function applyMatrix(rgb: RGB, matrix: number[][]): RGB {
+  const r = rgb.r / 255
+  const g = rgb.g / 255
+  const b = rgb.b / 255
+
+  return {
+    r: Math.round(Math.min(255, Math.max(0, (matrix[0][0] * r + matrix[0][1] * g + matrix[0][2] * b) * 255))),
+    g: Math.round(Math.min(255, Math.max(0, (matrix[1][0] * r + matrix[1][1] * g + matrix[1][2] * b) * 255))),
+    b: Math.round(Math.min(255, Math.max(0, (matrix[2][0] * r + matrix[2][1] * g + matrix[2][2] * b) * 255))),
+  }
+}
+
+/**
+ * Simulate how a colour appears to someone with colour blindness
+ */
+export function simulateColourblindness(hex: string, type: ColourblindType): string {
+  const rgb = hexToRgb(hex)
+  const matrix = colourblindMatrices[type]
+  const simulated = applyMatrix(rgb, matrix)
+  return rgbToHex(simulated)
+}
+
+/**
+ * Simulate colour blindness for multiple colours
+ */
+export function simulateColourblindnessBatch(
+  hexValues: string[],
+  type: ColourblindType
+): string[] {
+  return hexValues.map((hex) => simulateColourblindness(hex, type))
+}
+
+/**
+ * Get all colour blindness simulations for a single colour
+ */
+export function getAllSimulations(hex: string): Record<ColourblindType, string> {
+  const types: ColourblindType[] = [
+    'protanopia',
+    'deuteranopia',
+    'tritanopia',
+    'achromatopsia',
+    'protanomaly',
+    'deuteranomaly',
+    'tritanomaly',
+  ]
+
+  const result: Partial<Record<ColourblindType, string>> = {}
+
+  for (const type of types) {
+    result[type] = simulateColourblindness(hex, type)
+  }
+
+  return result as Record<ColourblindType, string>
+}
+
+/**
+ * Check if two colours are distinguishable for a specific type of colour blindness
+ */
+export function areColoursDistinguishable(
+  hex1: string,
+  hex2: string,
+  type: ColourblindType,
+  threshold: number = 20
+): boolean {
+  const sim1 = simulateColourblindness(hex1, type)
+  const sim2 = simulateColourblindness(hex2, type)
+
+  const rgb1 = hexToRgb(sim1)
+  const rgb2 = hexToRgb(sim2)
+
+  // Calculate Euclidean distance in RGB space
+  const distance = Math.sqrt(
+    Math.pow(rgb1.r - rgb2.r, 2) +
+    Math.pow(rgb1.g - rgb2.g, 2) +
+    Math.pow(rgb1.b - rgb2.b, 2)
+  )
+
+  return distance >= threshold
+}
+
+/**
+ * Check if a palette is accessible for all types of colour blindness
+ */
+export function checkPaletteAccessibility(
+  hexValues: string[],
+  threshold: number = 20
+): Record<ColourblindType, { accessible: boolean; problematicPairs: [string, string][] }> {
+  const types: ColourblindType[] = [
+    'protanopia',
+    'deuteranopia',
+    'tritanopia',
+    'achromatopsia',
+  ]
+
+  const result: Record<ColourblindType, { accessible: boolean; problematicPairs: [string, string][] }> = {} as Record<ColourblindType, { accessible: boolean; problematicPairs: [string, string][] }>
+
+  for (const type of types) {
+    const problematicPairs: [string, string][] = []
+
+    for (let i = 0; i < hexValues.length; i++) {
+      for (let j = i + 1; j < hexValues.length; j++) {
+        if (!areColoursDistinguishable(hexValues[i], hexValues[j], type, threshold)) {
+          problematicPairs.push([hexValues[i], hexValues[j]])
+        }
+      }
+    }
+
+    result[type] = {
+      accessible: problematicPairs.length === 0,
+      problematicPairs,
+    }
+  }
+
+  return result
+}
+
+/**
+ * Get human-readable name for colour blindness type
+ */
+export function getColourblindTypeName(type: ColourblindType): string {
+  const names: Record<ColourblindType, string> = {
+    protanopia: 'Protanopia (Red-blind)',
+    deuteranopia: 'Deuteranopia (Green-blind)',
+    tritanopia: 'Tritanopia (Blue-blind)',
+    achromatopsia: 'Achromatopsia (Monochromacy)',
+    protanomaly: 'Protanomaly (Red-weak)',
+    deuteranomaly: 'Deuteranomaly (Green-weak)',
+    tritanomaly: 'Tritanomaly (Blue-weak)',
+  }
+  return names[type]
+}
+
+/**
+ * Get description for colour blindness type
+ */
+export function getColourblindTypeDescription(type: ColourblindType): string {
+  const descriptions: Record<ColourblindType, string> = {
+    protanopia: 'Cannot perceive red light. Affects ~1% of males.',
+    deuteranopia: 'Cannot perceive green light. Affects ~1% of males.',
+    tritanopia: 'Cannot perceive blue light. Very rare (<0.01%).',
+    achromatopsia: 'Cannot perceive any colour. Extremely rare.',
+    protanomaly: 'Reduced sensitivity to red light. Affects ~1% of males.',
+    deuteranomaly: 'Reduced sensitivity to green light. Affects ~5% of males.',
+    tritanomaly: 'Reduced sensitivity to blue light. Very rare.',
+  }
+  return descriptions[type]
+}
+
+/**
+ * Colour blindness types for iteration
+ */
+export const colourblindTypes: ColourblindType[] = [
+  'protanopia',
+  'deuteranopia',
+  'tritanopia',
+  'achromatopsia',
+  'protanomaly',
+  'deuteranomaly',
+  'tritanomaly',
+]
+
+/**
+ * Common colour blindness types (most prevalent)
+ */
+export const commonColourblindTypes: ColourblindType[] = [
+  'protanopia',
+  'deuteranopia',
+  'tritanopia',
+  'achromatopsia',
+]
+
+/**
+ * Check colourblind accessibility within categories
+ * Only colours in the same category are checked against each other
+ */
+export function checkCategoryAccessibility(
+  categories: { category: string; colours: { hex: string; name: string }[] }[],
+  threshold: number = 20
+): {
+  byType: Record<ColourblindType, { accessible: boolean; problematicPairs: { hex1: string; hex2: string; category: string }[] }>
+  byCategory: Record<string, Record<ColourblindType, { accessible: boolean; problematicPairs: [string, string][] }>>
+} {
+  const types: ColourblindType[] = [
+    'protanopia',
+    'deuteranopia',
+    'tritanopia',
+    'achromatopsia',
+  ]
+
+  // Initialize results
+  const byType: Record<ColourblindType, { accessible: boolean; problematicPairs: { hex1: string; hex2: string; category: string }[] }> = {} as any
+  const byCategory: Record<string, Record<ColourblindType, { accessible: boolean; problematicPairs: [string, string][] }>> = {}
+
+  for (const type of types) {
+    byType[type] = { accessible: true, problematicPairs: [] }
+  }
+
+  // Check each category separately
+  for (const category of categories) {
+    if (category.colours.length < 2) continue
+
+    const hexValues = category.colours.map((c) => c.hex)
+    const categoryResult = checkPaletteAccessibility(hexValues, threshold)
+
+    byCategory[category.category] = categoryResult
+
+    // Aggregate into byType results
+    for (const type of types) {
+      const typeResult = categoryResult[type]
+      if (!typeResult.accessible) {
+        byType[type].accessible = false
+        for (const [hex1, hex2] of typeResult.problematicPairs) {
+          byType[type].problematicPairs.push({ hex1, hex2, category: category.category })
+        }
+      }
+    }
+  }
+
+  return { byType, byCategory }
+}

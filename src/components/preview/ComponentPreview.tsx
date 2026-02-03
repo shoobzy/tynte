@@ -1,16 +1,21 @@
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { Palette as PaletteIcon } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs'
+import { Slider } from '../ui/Slider'
 import { ButtonPreview } from './ButtonPreview'
 import { FormPreview } from './FormPreview'
 import { CardPreview } from './CardPreview'
 import { AlertPreview } from './AlertPreview'
 import { usePaletteStore } from '../../stores/paletteStore'
 import { usePreferencesStore } from '../../stores/preferencesStore'
+import { getOptimalTextColour } from '../../utils/colour/contrast'
+import { Colour } from '../../types/colour'
 
 export function ComponentPreview() {
   const { theme } = usePreferencesStore()
   const { palettes, activePaletteId } = usePaletteStore()
+  const [baseShadePercent, setBaseShadePercent] = useState(50)
 
   // Determine if dark mode based on theme setting
   const isDarkMode = theme === 'dark' ||
@@ -19,17 +24,9 @@ export function ComponentPreview() {
 
   const activePalette = palettes.find((p) => p.id === activePaletteId)
 
-  if (!activePalette) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        <PaletteIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
-        <p>Select or create a palette to preview components</p>
-      </div>
-    )
-  }
-
   // Extract colours by category
-  const getColoursByCategory = (category: string) => {
+  const getColoursByCategory = (category: string): Colour[] => {
+    if (!activePalette) return []
     const cat = activePalette.categories.find((c) => c.category === category)
     return cat?.colours || []
   }
@@ -43,53 +40,110 @@ export function ComponentPreview() {
   const errorColours = getColoursByCategory('error')
   const infoColours = getColoursByCategory('info')
 
-  // Helper to get colour at index or fallback
-  const getColour = (colours: typeof primaryColours, index: number, fallback: string) => {
-    return colours[index]?.hex || colours[0]?.hex || fallback
+  // Calculate indices based on base shade percentage
+  const getShadeIndices = (colours: Colour[]) => {
+    if (colours.length === 0) return { base: 0, hover: 0, active: 0 }
+    if (colours.length === 1) return { base: 0, hover: 0, active: 0 }
+    if (colours.length === 2) return { base: 0, hover: 1, active: 1 }
+
+    // Calculate base index from percentage
+    const baseIndex = Math.round((baseShadePercent / 100) * (colours.length - 1))
+
+    // Hover and active are darker (higher index), clamped to array bounds
+    const hoverIndex = Math.min(baseIndex + 1, colours.length - 1)
+    const activeIndex = Math.min(baseIndex + 2, colours.length - 1)
+
+    return { base: baseIndex, hover: hoverIndex, active: activeIndex }
+  }
+
+  // Helper to get colour variants for a category
+  const getColourVariants = (colours: Colour[], fallbacks: { base: string; hover: string; active: string }) => {
+    if (colours.length === 0) {
+      return {
+        base: fallbacks.base,
+        hover: fallbacks.hover,
+        active: fallbacks.active,
+        foreground: getOptimalTextColour(fallbacks.base),
+        indices: { base: -1, hover: -1, active: -1 },
+      }
+    }
+
+    const indices = getShadeIndices(colours)
+    const base = colours[indices.base]?.hex || fallbacks.base
+    const hover = colours[indices.hover]?.hex || fallbacks.hover
+    const active = colours[indices.active]?.hex || fallbacks.active
+
+    return {
+      base,
+      hover,
+      active,
+      foreground: getOptimalTextColour(base),
+      indices,
+    }
+  }
+
+  // Get variants for each category
+  const variants = useMemo(() => ({
+    primary: getColourVariants(primaryColours, { base: '#6366f1', hover: '#4f46e5', active: '#4338ca' }),
+    secondary: getColourVariants(secondaryColours, { base: '#64748b', hover: '#475569', active: '#334155' }),
+    accent: getColourVariants(accentColours, { base: '#f472b6', hover: '#ec4899', active: '#db2777' }),
+    success: getColourVariants(successColours, { base: '#22c55e', hover: '#16a34a', active: '#15803d' }),
+    warning: getColourVariants(warningColours, { base: '#f59e0b', hover: '#d97706', active: '#b45309' }),
+    error: getColourVariants(errorColours, { base: '#ef4444', hover: '#dc2626', active: '#b91c1c' }),
+    info: getColourVariants(infoColours, { base: '#3b82f6', hover: '#2563eb', active: '#1d4ed8' }),
+    neutral: getColourVariants(neutralColours, { base: '#6b7280', hover: '#9ca3af', active: '#4b5563' }),
+  }), [baseShadePercent, primaryColours, secondaryColours, accentColours, successColours, warningColours, errorColours, infoColours, neutralColours])
+
+  if (!activePalette) {
+    return (
+      <div className="text-center py-12 text-muted-foreground">
+        <PaletteIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <p>Select or create a palette to preview components</p>
+      </div>
+    )
   }
 
   // Build CSS variables from palette
-  // First colour = base, second = hover, third = active
   const paletteStyles = {
     // Primary variants
-    '--preview-primary': primaryColours[0]?.hex || '#6366f1',
-    '--preview-primary-hover': getColour(primaryColours, 1, '#4f46e5'),
-    '--preview-primary-active': getColour(primaryColours, 2, '#4338ca'),
-    '--preview-primary-foreground': '#ffffff',
+    '--preview-primary': variants.primary.base,
+    '--preview-primary-hover': variants.primary.hover,
+    '--preview-primary-active': variants.primary.active,
+    '--preview-primary-foreground': variants.primary.foreground,
     // Secondary variants
-    '--preview-secondary': secondaryColours[0]?.hex || '#64748b',
-    '--preview-secondary-hover': getColour(secondaryColours, 1, '#475569'),
-    '--preview-secondary-active': getColour(secondaryColours, 2, '#334155'),
-    '--preview-secondary-foreground': '#ffffff',
+    '--preview-secondary': variants.secondary.base,
+    '--preview-secondary-hover': variants.secondary.hover,
+    '--preview-secondary-active': variants.secondary.active,
+    '--preview-secondary-foreground': variants.secondary.foreground,
     // Accent variants
-    '--preview-accent': accentColours[0]?.hex || '#f472b6',
-    '--preview-accent-hover': getColour(accentColours, 1, '#ec4899'),
-    '--preview-accent-active': getColour(accentColours, 2, '#db2777'),
-    '--preview-accent-foreground': '#ffffff',
+    '--preview-accent': variants.accent.base,
+    '--preview-accent-hover': variants.accent.hover,
+    '--preview-accent-active': variants.accent.active,
+    '--preview-accent-foreground': variants.accent.foreground,
     // Success variants
-    '--preview-success': successColours[0]?.hex || '#22c55e',
-    '--preview-success-hover': getColour(successColours, 1, '#16a34a'),
-    '--preview-success-active': getColour(successColours, 2, '#15803d'),
-    '--preview-success-foreground': '#ffffff',
+    '--preview-success': variants.success.base,
+    '--preview-success-hover': variants.success.hover,
+    '--preview-success-active': variants.success.active,
+    '--preview-success-foreground': variants.success.foreground,
     // Warning variants
-    '--preview-warning': warningColours[0]?.hex || '#f59e0b',
-    '--preview-warning-hover': getColour(warningColours, 1, '#d97706'),
-    '--preview-warning-active': getColour(warningColours, 2, '#b45309'),
-    '--preview-warning-foreground': '#ffffff',
+    '--preview-warning': variants.warning.base,
+    '--preview-warning-hover': variants.warning.hover,
+    '--preview-warning-active': variants.warning.active,
+    '--preview-warning-foreground': variants.warning.foreground,
     // Error variants
-    '--preview-error': errorColours[0]?.hex || '#ef4444',
-    '--preview-error-hover': getColour(errorColours, 1, '#dc2626'),
-    '--preview-error-active': getColour(errorColours, 2, '#b91c1c'),
-    '--preview-error-foreground': '#ffffff',
+    '--preview-error': variants.error.base,
+    '--preview-error-hover': variants.error.hover,
+    '--preview-error-active': variants.error.active,
+    '--preview-error-foreground': variants.error.foreground,
     // Info variants
-    '--preview-info': infoColours[0]?.hex || '#3b82f6',
-    '--preview-info-hover': getColour(infoColours, 1, '#2563eb'),
-    '--preview-info-active': getColour(infoColours, 2, '#1d4ed8'),
-    '--preview-info-foreground': '#ffffff',
+    '--preview-info': variants.info.base,
+    '--preview-info-hover': variants.info.hover,
+    '--preview-info-active': variants.info.active,
+    '--preview-info-foreground': variants.info.foreground,
     // Neutral variants (for backgrounds, borders, text)
-    '--preview-neutral': neutralColours[0]?.hex || '#6b7280',
-    '--preview-neutral-light': getColour(neutralColours, 1, '#9ca3af'),
-    '--preview-neutral-dark': getColour(neutralColours, 2, '#4b5563'),
+    '--preview-neutral': variants.neutral.base,
+    '--preview-neutral-light': variants.neutral.hover,
+    '--preview-neutral-dark': variants.neutral.active,
     // Layout colours
     '--preview-background': isDarkMode ? '#0f172a' : '#ffffff',
     '--preview-foreground': isDarkMode ? '#f8fafc' : '#0f172a',
@@ -100,14 +154,60 @@ export function ComponentPreview() {
     '--preview-card-foreground': isDarkMode ? '#f8fafc' : '#0f172a',
   } as React.CSSProperties
 
+  // Find max colours across all categories for scale display
+  const maxColours = Math.max(
+    primaryColours.length,
+    secondaryColours.length,
+    accentColours.length,
+    successColours.length,
+    warningColours.length,
+    errorColours.length,
+    infoColours.length,
+    neutralColours.length
+  )
+
+  // Format index display (e.g., "5" or "500" style)
+  const formatIndex = (index: number, total: number) => {
+    if (index < 0) return '-'
+    if (total <= 1) return '0'
+    // Use Tailwind-style numbering if we have ~10 shades
+    if (total >= 8 && total <= 12) {
+      const step = Math.round(900 / (total - 1))
+      return String(50 + index * step)
+    }
+    return String(index + 1)
+  }
+
+  const categoryData = [
+    { name: 'Primary', key: 'primary', colours: primaryColours },
+    { name: 'Secondary', key: 'secondary', colours: secondaryColours },
+    { name: 'Accent', key: 'accent', colours: accentColours },
+    { name: 'Success', key: 'success', colours: successColours },
+    { name: 'Warning', key: 'warning', colours: warningColours },
+    { name: 'Error', key: 'error', colours: errorColours },
+    { name: 'Info', key: 'info', colours: infoColours },
+    { name: 'Neutral', key: 'neutral', colours: neutralColours },
+  ] as const
+
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h3 className="font-semibold">Component Preview</h3>
-        <p className="text-sm text-muted-foreground">
-          See how your palette looks on real UI components
-        </p>
+      {/* Base shade selector */}
+      <div className="p-4 rounded-lg border border-border bg-card">
+        <div className="max-w-md">
+          <Slider
+            value={baseShadePercent}
+            onChange={setBaseShadePercent}
+            min={0}
+            max={100}
+            step={1}
+            label="Base Shade Position"
+            valueFormat={(v) => `${v}%`}
+          />
+          <p className="text-xs text-muted-foreground mt-2">
+            Slide to select which shade in your scale to use as the base colour.
+            Hover and active states use progressively darker shades.
+          </p>
+        </div>
       </div>
 
       {/* Preview container */}
@@ -157,45 +257,56 @@ export function ComponentPreview() {
 
       {/* Colour reference - showing base, hover, and active variants */}
       <div className="space-y-4">
-        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-          <span className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-muted" /> Base
-          </span>
-          <span className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-muted opacity-75" /> Hover
-          </span>
-          <span className="flex items-center gap-1">
-            <div className="w-3 h-3 rounded bg-muted opacity-50" /> Active
-          </span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded bg-primary" /> Base
+            </span>
+            <span className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded bg-primary/75" /> Hover
+            </span>
+            <span className="flex items-center gap-1">
+              <div className="w-3 h-3 rounded bg-primary/50" /> Active
+            </span>
+          </div>
+          {maxColours > 0 && (
+            <span className="text-xs text-muted-foreground">
+              Using shade {Math.round((baseShadePercent / 100) * (maxColours - 1)) + 1} of {maxColours} as base
+            </span>
+          )}
         </div>
+
         <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
-          {[
-            { name: 'Primary', colours: primaryColours },
-            { name: 'Secondary', colours: secondaryColours },
-            { name: 'Accent', colours: accentColours },
-            { name: 'Success', colours: successColours },
-            { name: 'Warning', colours: warningColours },
-            { name: 'Error', colours: errorColours },
-            { name: 'Info', colours: infoColours },
-            { name: 'Neutral', colours: neutralColours },
-          ].map(({ name, colours }) => (
-            <div key={name} className="text-center">
-              <div className="flex gap-0.5 mb-1">
-                {[0, 1, 2].map((index) => (
+          {categoryData.map(({ name, key, colours }) => {
+            const v = variants[key]
+            return (
+              <div key={name} className="text-center">
+                <div className="flex gap-0.5 mb-1">
                   <div
-                    key={index}
-                    className="flex-1 h-8 first:rounded-l-md last:rounded-r-md border border-border"
-                    style={{ backgroundColor: colours[index]?.hex || colours[0]?.hex || '#cccccc' }}
-                    title={colours[index]?.hex || 'Not set'}
+                    className="flex-1 h-8 rounded-l-md border border-border"
+                    style={{ backgroundColor: v.base }}
+                    title={`Base: ${v.base}`}
                   />
-                ))}
+                  <div
+                    className="flex-1 h-8 border border-border"
+                    style={{ backgroundColor: v.hover }}
+                    title={`Hover: ${v.hover}`}
+                  />
+                  <div
+                    className="flex-1 h-8 rounded-r-md border border-border"
+                    style={{ backgroundColor: v.active }}
+                    title={`Active: ${v.active}`}
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">{name}</p>
+                {colours.length > 0 && (
+                  <p className="text-[10px] text-muted-foreground/60 font-mono">
+                    {formatIndex(v.indices.base, colours.length)} / {formatIndex(v.indices.hover, colours.length)} / {formatIndex(v.indices.active, colours.length)}
+                  </p>
+                )}
               </div>
-              <p className="text-xs text-muted-foreground">{name}</p>
-              <p className="text-[10px] text-muted-foreground/60">
-                {colours.length} colour{colours.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          ))}
+            )
+          })}
         </div>
       </div>
     </div>

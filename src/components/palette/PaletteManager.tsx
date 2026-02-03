@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Pencil, Check, X, Shuffle, Palette as PaletteIcon, FolderPlus } from 'lucide-react'
+import { Plus, Pencil, Check, X, Shuffle, Palette as PaletteIcon, FolderPlus, ChevronDown, Trash2 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
+import { ConfirmModal } from '../ui/ConfirmModal'
 import { CategoryGroup } from './CategoryGroup'
+import { GradientCard } from './GradientCard'
 import { ColourPicker } from './ColourPicker'
 import { usePaletteStore } from '../../stores/paletteStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -22,6 +24,9 @@ export function PaletteManager() {
     addColour,
     addColoursToCategory,
     addCategory,
+    updateGradient,
+    deleteGradient,
+    clearGradients,
   } = usePaletteStore()
 
   const {
@@ -38,6 +43,8 @@ export function PaletteManager() {
   const [editedName, setEditedName] = useState('')
   const [addCategoryOpen, setAddCategoryOpen] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
+  const [gradientsExpanded, setGradientsExpanded] = useState(true)
+  const [showClearGradientsConfirm, setShowClearGradientsConfirm] = useState(false)
 
   const activePalette = palettes.find((p) => p.id === activePaletteId)
 
@@ -208,6 +215,69 @@ export function PaletteManager() {
           ))}
         </AnimatePresence>
 
+        {/* Gradients Section */}
+        {activePalette.gradients.length > 0 && (
+          <div className="border border-border rounded-lg overflow-hidden bg-card">
+            {/* Header */}
+            <div
+              className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
+              onClick={() => setGradientsExpanded(!gradientsExpanded)}
+            >
+              <div className="flex items-center gap-2">
+                <motion.div
+                  animate={{ rotate: gradientsExpanded ? 0 : -90 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </motion.div>
+                <span className="font-medium">Gradients</span>
+                <span className="text-sm text-muted-foreground">
+                  ({activePalette.gradients.length})
+                </span>
+              </div>
+
+              <div onClick={(e) => e.stopPropagation()}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowClearGradientsConfirm(true)}
+                  className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+                >
+                  <Trash2 className="h-3.5 w-3.5 mr-1" />
+                  Clear
+                </Button>
+              </div>
+            </div>
+
+            {/* Gradients */}
+            <AnimatePresence>
+              {gradientsExpanded && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: 'auto', opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <div className="p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                      {activePalette.gradients.map((gradient) => (
+                        <GradientCard
+                          key={gradient.id}
+                          gradient={gradient}
+                          onUpdate={(updates) =>
+                            updateGradient(activePalette.id, gradient.id, updates)
+                          }
+                          onDelete={() => deleteGradient(activePalette.id, gradient.id)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
         {/* Add Group Button */}
         <Button
           variant="outline"
@@ -283,6 +353,17 @@ export function PaletteManager() {
           </div>
         </div>
       </Modal>
+
+      {/* Clear Gradients Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showClearGradientsConfirm}
+        onClose={() => setShowClearGradientsConfirm(false)}
+        onConfirm={() => clearGradients(activePalette?.id || '')}
+        title="Clear all gradients?"
+        description={`This will remove all ${activePalette?.gradients.length || 0} gradient${(activePalette?.gradients.length || 0) !== 1 ? 's' : ''} from this palette. This action cannot be undone.`}
+        confirmLabel="Clear All"
+        variant="destructive"
+      />
     </div>
   )
 }

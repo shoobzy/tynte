@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Modal } from '../ui/Modal'
 import { Button } from '../ui/Button'
 import { ColourCategory } from '../../types/palette'
-import { categoryLabels, defaultCategories } from '../../data/presets'
+import { defaultCategories, getCategoryLabel } from '../../data/presets'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
+import { usePaletteStore } from '../../stores/paletteStore'
 
 interface CategorySelectModalProps {
   isOpen: boolean
@@ -21,6 +22,24 @@ export function CategorySelectModal({
   title = 'Add to Palette',
 }: CategorySelectModalProps) {
   const [selectedCategory, setSelectedCategory] = useState<ColourCategory>('primary')
+  const { palettes, activePaletteId } = usePaletteStore()
+
+  const activePalette = palettes.find((p) => p.id === activePaletteId)
+
+  // Combine default categories with any custom categories from the active palette
+  const allCategories = useMemo(() => {
+    const categories = [...defaultCategories] as ColourCategory[]
+
+    if (activePalette) {
+      activePalette.categories.forEach((cat) => {
+        if (!categories.includes(cat.category)) {
+          categories.push(cat.category)
+        }
+      })
+    }
+
+    return categories
+  }, [activePalette])
 
   const handleConfirm = () => {
     onSelect(selectedCategory)
@@ -60,10 +79,10 @@ export function CategorySelectModal({
         {/* Category selection */}
         <div>
           <label className="text-sm font-medium text-muted-foreground mb-2 block">
-            Select category
+            Select group
           </label>
           <div className="grid grid-cols-2 gap-2">
-            {defaultCategories.map((category) => (
+            {allCategories.map((category) => (
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
@@ -76,7 +95,7 @@ export function CategorySelectModal({
                 `}
               >
                 <span className="text-sm font-medium">
-                  {categoryLabels[category] || category}
+                  {getCategoryLabel(category)}
                 </span>
               </button>
             ))}
@@ -89,7 +108,7 @@ export function CategorySelectModal({
             Cancel
           </Button>
           <Button onClick={handleConfirm}>
-            Add to {categoryLabels[selectedCategory]}
+            Add to {getCategoryLabel(selectedCategory)}
           </Button>
         </div>
       </div>

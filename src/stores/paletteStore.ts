@@ -29,6 +29,7 @@ interface PaletteStore {
   addGradient: (paletteId: string, gradient: Omit<Gradient, 'id' | 'createdAt'>) => void
   updateGradient: (paletteId: string, gradientId: string, updates: Partial<Omit<Gradient, 'id' | 'createdAt'>>) => void
   deleteGradient: (paletteId: string, gradientId: string) => void
+  clearGradients: (paletteId: string) => void
 
   // Bulk actions
   addColoursToCategory: (paletteId: string, colours: (string | { hex: string; name: string })[], category: ColourCategory) => void
@@ -387,6 +388,20 @@ export const usePaletteStore = create<PaletteStore>()(
                   gradients: palette.gradients.filter(
                     (gradient) => gradient.id !== gradientId
                   ),
+                  updatedAt: Date.now(),
+                }
+              : palette
+          ),
+        }))
+      },
+
+      clearGradients: (paletteId) => {
+        set((state) => ({
+          palettes: state.palettes.map((palette) =>
+            palette.id === paletteId
+              ? {
+                  ...palette,
+                  gradients: [],
                   updatedAt: Date.now(),
                 }
               : palette

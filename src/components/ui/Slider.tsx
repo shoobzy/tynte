@@ -38,6 +38,9 @@ export function Slider({
       if (!trackRef.current || disabled) return
 
       const rect = trackRef.current.getBoundingClientRect()
+      // Guard against zero-width track (can happen before layout is complete)
+      if (rect.width === 0) return
+
       const x = clientX - rect.left
       const percent = Math.max(0, Math.min(1, x / rect.width))
       const rawValue = min + percent * (max - min)
@@ -134,15 +137,9 @@ export function Slider({
         </div>
       )}
 
+      {/* Outer container with padding to extend clickable area for thumb at edges */}
       <div
-        ref={trackRef}
-        className={`
-          relative h-2 rounded-full cursor-pointer
-          ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-        `}
-        style={{
-          background: gradient || 'hsl(var(--muted))',
-        }}
+        className={`relative cursor-pointer px-2 -mx-2 py-2 -my-2 ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         role="slider"
@@ -152,6 +149,13 @@ export function Slider({
         aria-disabled={disabled}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown}
+      >
+      <div
+        ref={trackRef}
+        className="relative h-2 rounded-full mx-2"
+        style={{
+          background: gradient || 'hsl(var(--muted))',
+        }}
       >
         {/* Filled track */}
         {!gradient && (
@@ -163,7 +167,7 @@ export function Slider({
 
         {/* Thumb */}
         <div
-          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2"
+          className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
           style={{ left: `${percentage}%` }}
         >
           <motion.div
@@ -172,10 +176,12 @@ export function Slider({
               shadow-sm
               ${disabled ? '' : 'cursor-grab active:cursor-grabbing'}
             `}
+            animate={{ scale: isDragging ? 0.95 : 1 }}
             whileHover={disabled ? {} : { scale: 1.1 }}
-            whileTap={disabled ? {} : { scale: 0.95 }}
+            transition={{ duration: 0.1 }}
           />
         </div>
+      </div>
       </div>
     </div>
   )

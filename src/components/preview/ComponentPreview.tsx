@@ -301,7 +301,7 @@ export function ComponentPreview() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
-          {categoryData.map(({ name, key, colours }) => {
+          {categoryData.map(({ name, key }) => {
             const v = variants[key]
             return (
               <div key={name}>

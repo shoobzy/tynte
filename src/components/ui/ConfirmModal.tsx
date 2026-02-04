@@ -54,7 +54,7 @@ export function ConfirmModal({
           {cancelLabel}
         </Button>
         <Button
-          variant={variant === 'destructive' ? 'destructive' : 'default'}
+          variant={variant === 'destructive' ? 'destructive' : 'primary'}
           onClick={handleConfirm}
         >
           {confirmLabel}

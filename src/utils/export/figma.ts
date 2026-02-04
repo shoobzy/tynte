@@ -2,9 +2,15 @@ import { Palette } from '../../types/palette'
 import { FigmaExportOptions, ExportResult } from '../../types/export'
 import { hexToRgb } from '../colour/conversions'
 
+interface FigmaColourValue {
+  colorSpace: 'srgb'
+  components: [number, number, number]
+  hex: string
+}
+
 interface FigmaColourToken {
   $type: 'color'
-  $value: string
+  $value: FigmaColourValue
   $description?: string
 }
 
@@ -37,9 +43,14 @@ export function exportToFigmaTokens(
 
       for (const colour of categoryColours.colours) {
         const colourName = sanitiseName(colour.name)
+        const rgb = hexToRgb(colour.hex)
         const token: FigmaColourToken = {
           $type: 'color',
-          $value: colour.hex,
+          $value: {
+            colorSpace: 'srgb',
+            components: [rgb.r / 255, rgb.g / 255, rgb.b / 255],
+            hex: colour.hex,
+          },
         }
 
         if (options.includeDescription) {
@@ -53,9 +64,14 @@ export function exportToFigmaTokens(
     for (const categoryColours of palette.categories) {
       for (const colour of categoryColours.colours) {
         const tokenName = `${sanitiseName(categoryColours.category)}-${sanitiseName(colour.name)}`
+        const rgb = hexToRgb(colour.hex)
         const token: FigmaColourToken = {
           $type: 'color',
-          $value: colour.hex,
+          $value: {
+            colorSpace: 'srgb',
+            components: [rgb.r / 255, rgb.g / 255, rgb.b / 255],
+            hex: colour.hex,
+          },
         }
 
         if (options.includeDescription) {
@@ -68,8 +84,7 @@ export function exportToFigmaTokens(
   }
 
   const output = {
-    $schema: 'https://design-tokens.github.io/draft/2022-03-27/schema.json',
-    palette: tokens,
+    ...tokens,
   }
 
   return {
@@ -83,34 +98,46 @@ export function exportToFigmaVariables(
   palette: Palette,
   options: FigmaExportOptions
 ): ExportResult {
+  const collectionId = 'tynte_collection'
+  const modeId = 'tynte_mode'
+
   const variables: {
+    action: 'CREATE'
+    id: string
     name: string
-    type: 'COLOR'
-    resolvedValue: { r: number; g: number; b: number; a: number }
+    variableCollectionId: string
+    resolvedType: 'COLOR'
     description?: string
   }[] = []
 
+  const variableModeValues: {
+    variableId: string
+    modeId: string
+    value: { r: number; g: number; b: number; a: number }
+  }[] = []
+
+  let varIndex = 0
   for (const categoryColours of palette.categories) {
     for (const colour of categoryColours.colours) {
       const rgb = hexToRgb(colour.hex)
+      const varId = `tynte_var_${varIndex++}`
       const name = options.groupByCategory
         ? `${categoryColours.category}/${colour.name}`
         : `${categoryColours.category}-${colour.name}`
 
       const variable: {
+        action: 'CREATE'
+        id: string
         name: string
-        type: 'COLOR'
-        resolvedValue: { r: number; g: number; b: number; a: number }
+        variableCollectionId: string
+        resolvedType: 'COLOR'
         description?: string
       } = {
+        action: 'CREATE',
+        id: varId,
         name,
-        type: 'COLOR',
-        resolvedValue: {
-          r: rgb.r / 255,
-          g: rgb.g / 255,
-          b: rgb.b / 255,
-          a: 1,
-        },
+        variableCollectionId: collectionId,
+        resolvedType: 'COLOR',
       }
 
       if (options.includeDescription) {
@@ -118,17 +145,39 @@ export function exportToFigmaVariables(
       }
 
       variables.push(variable)
+
+      variableModeValues.push({
+        variableId: varId,
+        modeId: modeId,
+        value: {
+          r: rgb.r / 255,
+          g: rgb.g / 255,
+          b: rgb.b / 255,
+          a: 1,
+        },
+      })
     }
   }
 
   const output = {
-    variables,
-    collections: [
+    variableCollections: [
       {
+        action: 'CREATE' as const,
+        id: collectionId,
         name: palette.name,
-        modes: ['Default'],
+        initialModeId: modeId,
       },
     ],
+    variableModes: [
+      {
+        action: 'UPDATE' as const,
+        id: modeId,
+        name: 'Default',
+        variableCollectionId: collectionId,
+      },
+    ],
+    variables,
+    variableModeValues,
   }
 
   return {

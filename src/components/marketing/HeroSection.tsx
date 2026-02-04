@@ -63,7 +63,7 @@ export function HeroSection() {
           <h1 className="text-4xl sm:text-5xl md:text-6xl font-bold tracking-tight mb-6">
             Build accessible colour palettes
             <br />
-            <span className="text-primary">that work everywhere</span>
+            <span className="text-primary dark:text-violet-500">that work everywhere</span>
           </h1>
         </motion.div>
 

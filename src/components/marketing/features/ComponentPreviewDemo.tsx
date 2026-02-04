@@ -16,8 +16,8 @@ const lightPalette = {
 }
 
 const darkPalette = {
-  primary: '#a78bfa',
-  primaryForeground: '#1e1e1e',
+  primary: '#6217c7',
+  primaryForeground: '#ffffff',
   background: '#18181b',
   foreground: '#fafafa',
   muted: '#27272a',

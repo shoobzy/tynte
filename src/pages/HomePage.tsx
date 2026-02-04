@@ -47,7 +47,7 @@ export function HomePage() {
           {/* Feature 3: Export Anywhere */}
           <FeatureSection
             title="Export Anywhere"
-            description="Export your palettes to CSS custom properties, Tailwind config, SCSS variables, and more. Copy with one click and paste directly into your project."
+            description="Export your palettes to CSS custom properties, Tailwind config, SCSS variables, or Figma design tokens. Copy with one click and paste directly into your project or design tool."
           >
             <ExportDemo />
           </FeatureSection>

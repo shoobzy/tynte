@@ -42,6 +42,27 @@ $primary-800: #5b21b6;
 $primary-900: #4c1d95;
 $primary-950: #2e1065;`
 
+const figmaOutput = `{
+  "primary": {
+    "500": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.545, 0.361, 0.965],
+        "hex": "#8b5cf6"
+      }
+    },
+    "600": {
+      "$type": "color",
+      "$value": {
+        "colorSpace": "srgb",
+        "components": [0.384, 0.090, 0.780],
+        "hex": "#6217c7"
+      }
+    }
+  }
+}`
+
 export function ExportDemo() {
   const [copiedTab, setCopiedTab] = useState<string | null>(null)
 
@@ -54,10 +75,11 @@ export function ExportDemo() {
   return (
     <div className="bg-card border border-border rounded-2xl p-6 shadow-lg">
       <Tabs defaultValue="css">
-        <TabsList className="w-full grid grid-cols-3">
+        <TabsList className="w-full grid grid-cols-4">
           <TabsTrigger value="css">CSS</TabsTrigger>
           <TabsTrigger value="tailwind">Tailwind</TabsTrigger>
           <TabsTrigger value="scss">SCSS</TabsTrigger>
+          <TabsTrigger value="figma">Figma</TabsTrigger>
         </TabsList>
 
         <TabsContent value="css">
@@ -81,6 +103,14 @@ export function ExportDemo() {
             code={scssOutput}
             onCopy={() => handleCopy(scssOutput, 'scss')}
             copied={copiedTab === 'scss'}
+          />
+        </TabsContent>
+
+        <TabsContent value="figma">
+          <CodeBlock
+            code={figmaOutput}
+            onCopy={() => handleCopy(figmaOutput, 'figma')}
+            copied={copiedTab === 'figma'}
           />
         </TabsContent>
       </Tabs>

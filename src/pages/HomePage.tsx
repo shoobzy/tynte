@@ -20,7 +20,7 @@ export function HomePage() {
   }, [initializeTheme])
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground overflow-x-hidden">
       <MarketingNav />
 
       <main>

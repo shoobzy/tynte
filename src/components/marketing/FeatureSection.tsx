@@ -23,7 +23,45 @@ export function FeatureSection({
     : 'linear-gradient(to right, #8b5cf6, #6217c7, #4c1d95)'
 
   return (
-    <section className="py-20 sm:py-28 relative overflow-hidden">
+    <section className="py-20 sm:py-28 relative">
+      {/* Background orbs */}
+      <motion.div
+        className={`absolute w-[500px] h-[500px] rounded-full opacity-[0.15] dark:opacity-[0.10] blur-3xl pointer-events-none ${
+          reversed ? '-right-64 -top-20' : '-left-64 -top-20'
+        }`}
+        style={{
+          background: 'radial-gradient(circle, #8b5cf6 0%, transparent 70%)',
+        }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 0.15 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1 }}
+      />
+      <motion.div
+        className={`absolute w-[350px] h-[350px] rounded-full opacity-[0.12] dark:opacity-[0.08] blur-3xl pointer-events-none ${
+          reversed ? '-left-32 bottom-0' : '-right-32 bottom-0'
+        }`}
+        style={{
+          background: 'radial-gradient(circle, #6217c7 0%, transparent 70%)',
+        }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 0.12 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1, delay: 0.2 }}
+      />
+      <motion.div
+        className={`absolute w-[250px] h-[250px] rounded-full opacity-[0.10] dark:opacity-[0.06] blur-3xl pointer-events-none ${
+          reversed ? 'right-1/4 top-1/2' : 'left-1/4 top-1/3'
+        }`}
+        style={{
+          background: 'radial-gradient(circle, #c4b5fd 0%, transparent 70%)',
+        }}
+        initial={{ scale: 0.8, opacity: 0 }}
+        whileInView={{ scale: 1, opacity: 0.10 }}
+        viewport={{ once: true }}
+        transition={{ duration: 1, delay: 0.3 }}
+      />
+
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
         <div
           className={`flex flex-col gap-12 lg:gap-16 items-center ${
@@ -47,7 +85,7 @@ export function FeatureSection({
               </span>{' '}
               {title.split(' ').slice(1).join(' ')}
             </h2>
-            <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0">
+            <p className="text-lg text-muted-foreground max-w-xl mx-auto lg:mx-0 text-balance">
               {description}
             </p>
           </motion.div>

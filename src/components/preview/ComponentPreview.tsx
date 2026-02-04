@@ -62,24 +62,24 @@ export function ComponentPreview() {
   const getColourVariants = (colours: Colour[], fallbacks: { base: string; hover: string; active: string }) => {
     if (colours.length === 0) {
       return {
-        base: fallbacks.base,
-        hover: fallbacks.hover,
-        active: fallbacks.active,
+        base: { hex: fallbacks.base, name: null },
+        hover: { hex: fallbacks.hover, name: null },
+        active: { hex: fallbacks.active, name: null },
         foreground: getOptimalTextColour(fallbacks.base),
         indices: { base: -1, hover: -1, active: -1 },
       }
     }
 
     const indices = getShadeIndices(colours)
-    const base = colours[indices.base]?.hex || fallbacks.base
-    const hover = colours[indices.hover]?.hex || fallbacks.hover
-    const active = colours[indices.active]?.hex || fallbacks.active
+    const baseColour = colours[indices.base]
+    const hoverColour = colours[indices.hover]
+    const activeColour = colours[indices.active]
 
     return {
-      base,
-      hover,
-      active,
-      foreground: getOptimalTextColour(base),
+      base: { hex: baseColour?.hex || fallbacks.base, name: baseColour?.name || null },
+      hover: { hex: hoverColour?.hex || fallbacks.hover, name: hoverColour?.name || null },
+      active: { hex: activeColour?.hex || fallbacks.active, name: activeColour?.name || null },
+      foreground: getOptimalTextColour(baseColour?.hex || fallbacks.base),
       indices,
     }
   }
@@ -108,44 +108,44 @@ export function ComponentPreview() {
   // Build CSS variables from palette
   const paletteStyles = {
     // Primary variants
-    '--preview-primary': variants.primary.base,
-    '--preview-primary-hover': variants.primary.hover,
-    '--preview-primary-active': variants.primary.active,
+    '--preview-primary': variants.primary.base.hex,
+    '--preview-primary-hover': variants.primary.hover.hex,
+    '--preview-primary-active': variants.primary.active.hex,
     '--preview-primary-foreground': variants.primary.foreground,
     // Secondary variants
-    '--preview-secondary': variants.secondary.base,
-    '--preview-secondary-hover': variants.secondary.hover,
-    '--preview-secondary-active': variants.secondary.active,
+    '--preview-secondary': variants.secondary.base.hex,
+    '--preview-secondary-hover': variants.secondary.hover.hex,
+    '--preview-secondary-active': variants.secondary.active.hex,
     '--preview-secondary-foreground': variants.secondary.foreground,
     // Accent variants
-    '--preview-accent': variants.accent.base,
-    '--preview-accent-hover': variants.accent.hover,
-    '--preview-accent-active': variants.accent.active,
+    '--preview-accent': variants.accent.base.hex,
+    '--preview-accent-hover': variants.accent.hover.hex,
+    '--preview-accent-active': variants.accent.active.hex,
     '--preview-accent-foreground': variants.accent.foreground,
     // Success variants
-    '--preview-success': variants.success.base,
-    '--preview-success-hover': variants.success.hover,
-    '--preview-success-active': variants.success.active,
+    '--preview-success': variants.success.base.hex,
+    '--preview-success-hover': variants.success.hover.hex,
+    '--preview-success-active': variants.success.active.hex,
     '--preview-success-foreground': variants.success.foreground,
     // Warning variants
-    '--preview-warning': variants.warning.base,
-    '--preview-warning-hover': variants.warning.hover,
-    '--preview-warning-active': variants.warning.active,
+    '--preview-warning': variants.warning.base.hex,
+    '--preview-warning-hover': variants.warning.hover.hex,
+    '--preview-warning-active': variants.warning.active.hex,
     '--preview-warning-foreground': variants.warning.foreground,
     // Error variants
-    '--preview-error': variants.error.base,
-    '--preview-error-hover': variants.error.hover,
-    '--preview-error-active': variants.error.active,
+    '--preview-error': variants.error.base.hex,
+    '--preview-error-hover': variants.error.hover.hex,
+    '--preview-error-active': variants.error.active.hex,
     '--preview-error-foreground': variants.error.foreground,
     // Info variants
-    '--preview-info': variants.info.base,
-    '--preview-info-hover': variants.info.hover,
-    '--preview-info-active': variants.info.active,
+    '--preview-info': variants.info.base.hex,
+    '--preview-info-hover': variants.info.hover.hex,
+    '--preview-info-active': variants.info.active.hex,
     '--preview-info-foreground': variants.info.foreground,
     // Neutral variants (for backgrounds, borders, text)
-    '--preview-neutral': variants.neutral.base,
-    '--preview-neutral-light': variants.neutral.hover,
-    '--preview-neutral-dark': variants.neutral.active,
+    '--preview-neutral': variants.neutral.base.hex,
+    '--preview-neutral-light': variants.neutral.hover.hex,
+    '--preview-neutral-dark': variants.neutral.active.hex,
     // Layout colours
     '--preview-background': isDarkMode ? '#0f172a' : '#ffffff',
     '--preview-foreground': isDarkMode ? '#f8fafc' : '#0f172a',
@@ -167,18 +167,6 @@ export function ComponentPreview() {
     infoColours.length,
     neutralColours.length
   )
-
-  // Format index display (e.g., "5" or "500" style)
-  const formatIndex = (index: number, total: number) => {
-    if (index < 0) return '-'
-    if (total <= 1) return '0'
-    // Use Tailwind-style numbering if we have ~10 shades
-    if (total >= 8 && total <= 12) {
-      const step = Math.round(900 / (total - 1))
-      return String(50 + index * step)
-    }
-    return String(index + 1)
-  }
 
   const categoryData = [
     { name: 'Primary', key: 'primary', colours: primaryColours },
@@ -304,57 +292,94 @@ export function ComponentPreview() {
       </motion.div>
 
       {/* Colour reference - showing base, hover, and active variants */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-primary" /> Base
-            </span>
-            <span className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-primary/75" /> Hover
-            </span>
-            <span className="flex items-center gap-1">
-              <div className="w-3 h-3 rounded bg-primary/50" /> Active
-            </span>
-          </div>
-          {maxColours > 0 && (
-            <span className="text-xs text-muted-foreground">
-              {baseShadeIndex !== null
-                ? `Using shade ${baseShadeIndex + 1} as base`
-                : `Auto: using middle shade as base`
-              }
-            </span>
-          )}
+      <div className="p-4 rounded-lg border border-border bg-card space-y-4">
+        <div className="flex items-center justify-between gap-4">
+          <h3 className="text-sm font-medium">Active Colours</h3>
+          <p className="text-xs text-muted-foreground">
+            Colours applied to buttons and interactive elements in the preview above
+          </p>
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-8 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-4">
           {categoryData.map(({ name, key, colours }) => {
             const v = variants[key]
             return (
-              <div key={name} className="text-center">
-                <div className="flex gap-0.5 mb-1">
-                  <div
-                    className="flex-1 h-8 rounded-l-md border border-border"
-                    style={{ backgroundColor: v.base }}
-                    title={`Base: ${v.base}`}
-                  />
-                  <div
-                    className="flex-1 h-8 border border-border"
-                    style={{ backgroundColor: v.hover }}
-                    title={`Hover: ${v.hover}`}
-                  />
-                  <div
-                    className="flex-1 h-8 rounded-r-md border border-border"
-                    style={{ backgroundColor: v.active }}
-                    title={`Active: ${v.active}`}
-                  />
+              <div key={name}>
+                <p className="text-xs font-medium mb-2">{name}</p>
+                <div className="space-y-1.5">
+                  {/* Base */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-10 h-10 rounded-md border border-border flex-shrink-0"
+                      style={{ backgroundColor: v.base.hex }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] text-muted-foreground">Base</p>
+                      {v.base.name && v.base.name !== v.base.hex.toUpperCase() ? (
+                        <>
+                          <p className="text-[11px] font-medium truncate" title={v.base.name}>
+                            {v.base.name}
+                          </p>
+                          <p className="text-[10px] font-mono text-muted-foreground truncate" title={v.base.hex}>
+                            {v.base.hex.toUpperCase()}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-[10px] font-mono truncate" title={v.base.hex}>
+                          {v.base.hex.toUpperCase()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Hover */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-10 h-10 rounded-md border border-border flex-shrink-0"
+                      style={{ backgroundColor: v.hover.hex }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] text-muted-foreground">Hover</p>
+                      {v.hover.name && v.hover.name !== v.hover.hex.toUpperCase() ? (
+                        <>
+                          <p className="text-[11px] font-medium truncate" title={v.hover.name}>
+                            {v.hover.name}
+                          </p>
+                          <p className="text-[10px] font-mono text-muted-foreground truncate" title={v.hover.hex}>
+                            {v.hover.hex.toUpperCase()}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-[10px] font-mono truncate" title={v.hover.hex}>
+                          {v.hover.hex.toUpperCase()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  {/* Active */}
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-10 h-10 rounded-md border border-border flex-shrink-0"
+                      style={{ backgroundColor: v.active.hex }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] text-muted-foreground">Active</p>
+                      {v.active.name && v.active.name !== v.active.hex.toUpperCase() ? (
+                        <>
+                          <p className="text-[11px] font-medium truncate" title={v.active.name}>
+                            {v.active.name}
+                          </p>
+                          <p className="text-[10px] font-mono text-muted-foreground truncate" title={v.active.hex}>
+                            {v.active.hex.toUpperCase()}
+                          </p>
+                        </>
+                      ) : (
+                        <p className="text-[10px] font-mono truncate" title={v.active.hex}>
+                          {v.active.hex.toUpperCase()}
+                        </p>
+                      )}
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-muted-foreground">{name}</p>
-                {colours.length > 0 && (
-                  <p className="text-[10px] text-muted-foreground/60 font-mono">
-                    {formatIndex(v.indices.base, colours.length)} / {formatIndex(v.indices.hover, colours.length)} / {formatIndex(v.indices.active, colours.length)}
-                  </p>
-                )}
               </div>
             )
           })}

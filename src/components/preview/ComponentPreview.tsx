@@ -1,8 +1,7 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
-import { Palette as PaletteIcon } from 'lucide-react'
+import { Palette as PaletteIcon, Check } from 'lucide-react'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs'
-import { Slider } from '../ui/Slider'
 import { ButtonPreview } from './ButtonPreview'
 import { FormPreview } from './FormPreview'
 import { CardPreview } from './CardPreview'
@@ -15,7 +14,7 @@ import { Colour } from '../../types/colour'
 export function ComponentPreview() {
   const { theme } = usePreferencesStore()
   const { palettes, activePaletteId } = usePaletteStore()
-  const [baseShadePercent, setBaseShadePercent] = useState(50)
+  const [baseShadeIndex, setBaseShadeIndex] = useState<number | null>(null) // null = auto (middle)
 
   // Determine if dark mode based on theme setting
   const isDarkMode = theme === 'dark' ||
@@ -40,14 +39,17 @@ export function ComponentPreview() {
   const errorColours = getColoursByCategory('error')
   const infoColours = getColoursByCategory('info')
 
-  // Calculate indices based on base shade percentage
+  // Calculate indices based on selected base shade
   const getShadeIndices = (colours: Colour[]) => {
     if (colours.length === 0) return { base: 0, hover: 0, active: 0 }
     if (colours.length === 1) return { base: 0, hover: 0, active: 0 }
     if (colours.length === 2) return { base: 0, hover: 1, active: 1 }
 
-    // Calculate base index from percentage
-    const baseIndex = Math.round((baseShadePercent / 100) * (colours.length - 1))
+    // Use selected index, or default to middle of scale
+    const defaultBase = Math.floor(colours.length / 2)
+    const baseIndex = baseShadeIndex !== null
+      ? Math.min(baseShadeIndex, colours.length - 1)
+      : defaultBase
 
     // Hover and active are darker (higher index), clamped to array bounds
     const hoverIndex = Math.min(baseIndex + 1, colours.length - 1)
@@ -92,7 +94,7 @@ export function ComponentPreview() {
     error: getColourVariants(errorColours, { base: '#ef4444', hover: '#dc2626', active: '#b91c1c' }),
     info: getColourVariants(infoColours, { base: '#3b82f6', hover: '#2563eb', active: '#1d4ed8' }),
     neutral: getColourVariants(neutralColours, { base: '#6b7280', hover: '#9ca3af', active: '#4b5563' }),
-  }), [baseShadePercent, primaryColours, secondaryColours, accentColours, successColours, warningColours, errorColours, infoColours, neutralColours])
+  }), [baseShadeIndex, primaryColours, secondaryColours, accentColours, successColours, warningColours, errorColours, infoColours, neutralColours])
 
   if (!activePalette) {
     return (
@@ -192,23 +194,69 @@ export function ComponentPreview() {
   return (
     <div className="space-y-6">
       {/* Base shade selector */}
-      <div className="p-4 rounded-lg border border-border bg-card">
-        <div className="max-w-md">
-          <Slider
-            value={baseShadePercent}
-            onChange={setBaseShadePercent}
-            min={0}
-            max={100}
-            step={1}
-            label="Base Shade Position"
-            valueFormat={(v) => `${v}%`}
-          />
-          <p className="text-xs text-muted-foreground mt-2">
-            Slide to select which shade in your scale to use as the base colour.
-            Hover and active states use progressively darker shades.
+      {maxColours > 1 && (
+        <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+          <div className="flex items-center justify-between">
+            <label className="text-sm font-medium">Base Shade</label>
+            <span className="text-xs text-muted-foreground">
+              {baseShadeIndex !== null ? `Shade ${baseShadeIndex + 1}` : 'Auto (middle)'}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Select which shade to use as the base colour. Hover and active states use progressively darker shades.
           </p>
+          <div className="flex gap-1 flex-wrap">
+            {/* Auto option */}
+            <button
+              onClick={() => setBaseShadeIndex(null)}
+              className={`
+                px-3 py-1.5 text-xs rounded-md border transition-all
+                ${baseShadeIndex === null
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-border hover:border-muted-foreground'
+                }
+              `}
+            >
+              Auto
+            </button>
+            {/* Shade swatches - use primary colours as reference */}
+            {primaryColours.length > 0 ? (
+              primaryColours.map((colour, index) => {
+                const isSelected = baseShadeIndex === index
+                const isBase = baseShadeIndex === null
+                  ? index === Math.floor(primaryColours.length / 2)
+                  : isSelected
+                return (
+                  <button
+                    key={index}
+                    onClick={() => setBaseShadeIndex(index)}
+                    className={`
+                      relative w-8 h-8 rounded-md border-2 transition-all
+                      ${isSelected
+                        ? 'border-primary ring-2 ring-primary ring-offset-2'
+                        : isBase && baseShadeIndex === null
+                          ? 'border-primary/50'
+                          : 'border-transparent hover:border-muted-foreground'
+                      }
+                    `}
+                    style={{ backgroundColor: colour.hex }}
+                    title={`Shade ${index + 1}: ${colour.hex}`}
+                  >
+                    {isSelected && (
+                      <Check
+                        className="absolute inset-0 m-auto h-4 w-4"
+                        style={{ color: getOptimalTextColour(colour.hex) }}
+                      />
+                    )}
+                  </button>
+                )
+              })
+            ) : (
+              <span className="text-xs text-muted-foreground">Add colours to Primary to select base shade</span>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Preview container */}
       <motion.div
@@ -271,7 +319,10 @@ export function ComponentPreview() {
           </div>
           {maxColours > 0 && (
             <span className="text-xs text-muted-foreground">
-              Using shade {Math.round((baseShadePercent / 100) * (maxColours - 1)) + 1} of {maxColours} as base
+              {baseShadeIndex !== null
+                ? `Using shade ${baseShadeIndex + 1} as base`
+                : `Auto: using middle shade as base`
+              }
             </span>
           )}
         </div>

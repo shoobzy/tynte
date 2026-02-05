@@ -35,12 +35,15 @@ export function GradientGenerator() {
   const [nameError, setNameError] = useState('')
   const [expandedStopIndex, setExpandedStopIndex] = useState<number | null>(0)
 
-  // Get all colours from the active palette
-  const paletteColours = useMemo(() => {
+  // Get colours from the active palette grouped by category
+  const paletteColourGroups = useMemo(() => {
     if (!activePalette) return []
-    return activePalette.categories.flatMap((cat) =>
-      cat.colours.map((c) => ({ hex: c.hex, name: c.name }))
-    )
+    return activePalette.categories
+      .filter((cat) => cat.colours.length > 0)
+      .map((cat) => ({
+        category: cat.category,
+        colours: cat.colours.map((c) => ({ hex: c.hex, name: c.name })),
+      }))
   }, [activePalette])
 
   const cssGradient = generateCSSGradient(gradientType, angle, stops)
@@ -313,7 +316,7 @@ export function GradientGenerator() {
                         <InlineColourPicker
                           value={stop.colour}
                           onChange={(hex) => handleUpdateStop(originalIndex, { colour: hex })}
-                          paletteColours={paletteColours}
+                          paletteColourGroups={paletteColourGroups}
                           onError={(msg) => toast.error(msg)}
                           onSuccess={(msg) => toast.success(msg)}
                           onClose={() => setExpandedStopIndex(null)}

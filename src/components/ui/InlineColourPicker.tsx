@@ -5,11 +5,19 @@ import { Input } from './Input'
 import { Slider } from './Slider'
 import { hexToHsv, hsvToHex, isValidHex, normaliseHex } from '../../utils/colour/conversions'
 import { supportsEyeDropper } from '../../utils/helpers'
+import { categoryLabels } from '../../data/presets'
+
+export interface PaletteColourGroup {
+  category: string
+  colours: { hex: string; name: string }[]
+}
 
 interface InlineColourPickerProps {
   value: string
   onChange: (hex: string) => void
+  /** @deprecated Use paletteColourGroups for grouped display */
   paletteColours?: { hex: string; name: string }[]
+  paletteColourGroups?: PaletteColourGroup[]
   onError?: (message: string) => void
   onSuccess?: (message: string) => void
   onClose?: () => void
@@ -19,6 +27,7 @@ export function InlineColourPicker({
   value,
   onChange,
   paletteColours = [],
+  paletteColourGroups,
   onError,
   onSuccess,
   onClose,
@@ -214,8 +223,37 @@ export function InlineColourPicker({
         )}
       </div>
 
-      {/* Palette colours */}
-      {paletteColours.length > 0 && (
+      {/* Palette colours - grouped by category */}
+      {paletteColourGroups && paletteColourGroups.some(g => g.colours.length > 0) && (
+        <div className="space-y-2">
+          <p className="text-xs text-muted-foreground">From palette:</p>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {paletteColourGroups.filter(g => g.colours.length > 0).map((group) => (
+              <div key={group.category}>
+                <label className="text-xs text-muted-foreground">
+                  {categoryLabels[group.category] || group.category}
+                </label>
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {group.colours.map((colour, index) => (
+                    <button
+                      key={index}
+                      className={`w-7 h-7 rounded border border-border hover:ring-2 hover:ring-primary hover:ring-offset-1 transition-all ${
+                        colour.hex.toLowerCase() === value.toLowerCase() ? 'ring-2 ring-primary ring-offset-1' : ''
+                      }`}
+                      style={{ backgroundColor: colour.hex }}
+                      onClick={() => onChange(colour.hex)}
+                      title={`${colour.name} (${colour.hex})`}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Palette colours - flat list (legacy) */}
+      {!paletteColourGroups && paletteColours.length > 0 && (
         <div>
           <p className="text-xs text-muted-foreground mb-2">From palette:</p>
           <div className="flex flex-wrap gap-1.5">

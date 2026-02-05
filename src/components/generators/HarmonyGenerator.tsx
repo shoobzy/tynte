@@ -36,12 +36,15 @@ export function HarmonyGenerator() {
 
   const activePalette = palettes.find((p) => p.id === activePaletteId)
 
-  // Get all colours from the active palette
-  const paletteColours = useMemo(() => {
+  // Get colours from the active palette grouped by category
+  const paletteColourGroups = useMemo(() => {
     if (!activePalette) return []
-    return activePalette.categories.flatMap((cat) =>
-      cat.colours.map((c) => ({ hex: c.hex, name: c.name }))
-    )
+    return activePalette.categories
+      .filter((cat) => cat.colours.length > 0)
+      .map((cat) => ({
+        category: cat.category,
+        colours: cat.colours.map((c) => ({ hex: c.hex, name: c.name })),
+      }))
   }, [activePalette])
 
   useEffect(() => {
@@ -129,7 +132,7 @@ export function HarmonyGenerator() {
               <InlineColourPicker
                 value={harmonyBaseColour}
                 onChange={setHarmonyBaseColour}
-                paletteColours={paletteColours}
+                paletteColourGroups={paletteColourGroups}
                 onError={(msg) => toast.error(msg)}
                 onSuccess={(msg) => toast.success(msg)}
               />

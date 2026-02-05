@@ -22,15 +22,22 @@ src/
 │   ├── accessibility/# ContrastChecker, ContrastMatrix, ColourblindSimulator, AccessibilityReport
 │   ├── export/       # ExportModal, CSSExport, TailwindExport, FigmaExport
 │   ├── preview/      # ComponentPreview
+│   ├── marketing/    # Landing page components (HeroSection, FeatureHighlights, etc.)
 │   └── dev/          # DevProfiler and development utilities
+├── pages/            # Page components (HomePage)
 ├── stores/           # Zustand stores (paletteStore, uiStore, preferencesStore)
 ├── utils/
 │   ├── colour/       # Colour conversion, contrast, harmony utilities
 │   └── performance.ts # Benchmarking and profiling utilities
 ├── workers/          # Web Workers for CPU-intensive tasks
 ├── types/            # TypeScript type definitions
-└── data/             # Presets and default data
+├── data/             # Presets and default data
+└── router.tsx        # React Router configuration
 ```
+
+## Routing
+- `/` - Marketing homepage (`src/pages/HomePage.tsx`)
+- `/app` - Main application (`src/App.tsx`)
 
 ## Conventions
 
@@ -240,6 +247,21 @@ Located in `src/utils/colour/conversions.ts`. Supports:
 - `hexToHsv` and `hsvToHex` for HSV-based colour pickers
 - Format strings: `formatRgb()`, `formatHsl()`, `formatOklch()`, `formatCmyk()`
 - Validation: `isValidHex()`, `normaliseHex()`, `parseColour()`
+
+### Marketing Homepage
+The landing page at `/` includes:
+- `MarketingNav` - Navigation with theme toggle
+- `HeroSection` - Animated hero with floating UI elements (85vh height to show content below)
+- `FeatureHighlights` - 4-box grid highlighting key benefits (OKLCH, offline, dark mode, instant feedback)
+- `FeatureSection` - Detailed feature demos (Accessibility, Shade Generation, Export, Preview)
+- `CTASection` - Call to action
+- `Footer` - Links and branding
+
+### PaletteManager Welcome State
+When no palettes exist, PaletteManager shows a welcome state with:
+- Hero section with "Welcome to Tynte" and CTA buttons
+- 6 clickable feature cards that create a palette and navigate to that feature
+- Features: Palette Organisation, Contrast Checker, Colourblind Simulation, Harmony Generator, Image Extraction, Multi-format Export
 
 ## Performance Optimizations
 

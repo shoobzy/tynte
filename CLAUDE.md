@@ -40,6 +40,11 @@ src/
 - `/app` - Main application (`src/App.tsx`)
 - `*` - 404 page (`src/pages/NotFoundPage.tsx`) - catches all unmatched routes
 
+## Deployment
+- Hosted on **Vercel** at https://tynte.vercel.app
+- `vercel.json` configures rewrites for SPA routing (all routes → index.html)
+- Auto-deploys from `main` branch on GitHub
+
 ## Conventions
 
 ### Language

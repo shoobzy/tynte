@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Palette,
@@ -46,6 +47,9 @@ export function Sidebar() {
     duplicatePalette,
     toggleFavourite,
   } = usePaletteStore()
+
+  const [paletteToDelete, setPaletteToDelete] = useState<string | null>(null)
+  const paletteToDeleteName = palettes.find(p => p.id === paletteToDelete)?.name
 
   const sortedPalettes = [...palettes].sort((a, b) => {
     // Favourites first
@@ -191,7 +195,7 @@ export function Sidebar() {
                               <DropdownSeparator />
                               <DropdownItem
                                 destructive
-                                onClick={() => deletePalette(palette.id)}
+                                onClick={() => setPaletteToDelete(palette.id)}
                               >
                                 <Trash2 className="h-4 w-4" />
                                 Delete
@@ -246,6 +250,22 @@ export function Sidebar() {
       title="Discard unsaved changes?"
       description="You have unsaved changes that will be lost if you navigate away. Are you sure you want to continue?"
       confirmLabel="Discard Changes"
+      variant="destructive"
+    />
+
+    {/* Delete palette confirmation modal */}
+    <ConfirmModal
+      isOpen={paletteToDelete !== null}
+      onClose={() => setPaletteToDelete(null)}
+      onConfirm={() => {
+        if (paletteToDelete) {
+          deletePalette(paletteToDelete)
+          setPaletteToDelete(null)
+        }
+      }}
+      title="Delete palette?"
+      description={`Are you sure you want to delete "${paletteToDeleteName}"? This action cannot be undone.`}
+      confirmLabel="Delete"
       variant="destructive"
     />
     </>

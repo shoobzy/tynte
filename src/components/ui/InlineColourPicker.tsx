@@ -222,7 +222,7 @@ export function InlineColourPicker({
           style={{ backgroundColor: value }}
         />
         {supportsEyeDropper() && (
-          <Button variant="outline" size="icon" onClick={handleEyeDropper} className="h-9 w-9" title="Pick from screen">
+          <Button variant="outline" size="icon" onClick={handleEyeDropper} className="h-9 w-9 min-w-9" title="Pick from screen">
             <Pipette className="h-4 w-4" />
           </Button>
         )}

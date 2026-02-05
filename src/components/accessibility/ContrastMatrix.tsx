@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, X, AlertTriangle, ChevronDown, RefreshCw, Type, Square, Layers, Trash2 } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { usePaletteStore } from '../../stores/paletteStore'
+import { useActivePalette, usePaletteActions } from '../../stores/paletteStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useToast } from '../ui/Toast'
 import {
@@ -13,11 +13,11 @@ import { ColourRole } from '../../types/colour'
 import { categoryLabels } from '../../data/presets'
 
 export function ContrastMatrix() {
-  const { palettes, activePaletteId, updateColour } = usePaletteStore()
+  const activePalette = useActivePalette()
+  const { updateColour } = usePaletteActions()
   const { setContrastColours, setAccessibilityTab } = useUIStore()
   const toast = useToast()
 
-  const activePalette = palettes.find((p) => p.id === activePaletteId)
   const allColours = activePalette?.categories.flatMap((cat) => cat.colours) || []
   const categoriesWithColours = activePalette?.categories.filter((cat) => cat.colours.length > 0) || []
 
@@ -33,15 +33,15 @@ export function ContrastMatrix() {
   }
 
   const handleUpdateColour = (colourId: string, newHex: string) => {
-    if (activePaletteId) {
-      updateColour(activePaletteId, colourId, { hex: newHex })
+    if (activePalette?.id) {
+      updateColour(activePalette.id, colourId, { hex: newHex })
       toast.success('Colour updated')
     }
   }
 
   const handleSetRole = (colourId: string, role: ColourRole | undefined) => {
-    if (activePaletteId) {
-      updateColour(activePaletteId, colourId, { role })
+    if (activePalette?.id) {
+      updateColour(activePalette.id, colourId, { role })
     }
   }
 
@@ -60,7 +60,7 @@ export function ContrastMatrix() {
       <RoleAssignmentSection
         categoriesWithColours={categoriesWithColours}
         onSetRole={handleSetRole}
-        activePaletteId={activePaletteId}
+        activePaletteId={activePalette?.id || ''}
       />
 
       {/* Show contrast analysis if roles are assigned */}

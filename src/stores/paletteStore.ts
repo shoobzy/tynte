@@ -632,3 +632,48 @@ export const usePaletteStore = create<PaletteStore>()(
     }
   )
 )
+
+// ============================================================================
+// Selector hooks for fine-grained subscriptions
+// Use these instead of destructuring the entire store to avoid unnecessary re-renders
+// ============================================================================
+
+/** Returns just the active palette (or null). Only re-renders when active palette changes. */
+export const useActivePalette = () =>
+  usePaletteStore((state) => state.palettes.find((p) => p.id === state.activePaletteId) ?? null)
+
+/** Returns just the active palette ID. Only re-renders when ID changes. */
+export const useActivePaletteId = () => usePaletteStore((state) => state.activePaletteId)
+
+/** Returns just the palettes array. Only re-renders when palettes change. */
+export const usePalettes = () => usePaletteStore((state) => state.palettes)
+
+/** Returns palette actions without subscribing to state changes. Never causes re-renders. */
+export const usePaletteActions = () =>
+  usePaletteStore((state) => ({
+    createPalette: state.createPalette,
+    updatePalette: state.updatePalette,
+    deletePalette: state.deletePalette,
+    duplicatePalette: state.duplicatePalette,
+    setActivePalette: state.setActivePalette,
+    toggleFavourite: state.toggleFavourite,
+    addColour: state.addColour,
+    updateColour: state.updateColour,
+    deleteColour: state.deleteColour,
+    reorderColours: state.reorderColours,
+    moveColourToCategory: state.moveColourToCategory,
+    toggleColourLock: state.toggleColourLock,
+    revertColour: state.revertColour,
+    addGradient: state.addGradient,
+    updateGradient: state.updateGradient,
+    deleteGradient: state.deleteGradient,
+    clearGradients: state.clearGradients,
+    addColoursToCategory: state.addColoursToCategory,
+    clearCategory: state.clearCategory,
+    addCategory: state.addCategory,
+    deleteCategory: state.deleteCategory,
+    renameCategory: state.renameCategory,
+    markWarningReviewed: state.markWarningReviewed,
+    unmarkWarningReviewed: state.unmarkWarningReviewed,
+    isWarningReviewed: state.isWarningReviewed,
+  }))

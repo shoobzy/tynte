@@ -14,7 +14,7 @@ import {
   Square,
 } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { usePaletteStore } from '../../stores/paletteStore'
+import { useActivePalette } from '../../stores/paletteStore'
 import { useUIStore } from '../../stores/uiStore'
 import { useToast } from '../ui/Toast'
 import { getContrastRatioFromHex, getWCAGLevel } from '../../utils/colour/contrast'
@@ -29,11 +29,9 @@ import { Colour, ColourblindType } from '../../types/colour'
 import { categoryLabels } from '../../data/presets'
 
 export function AccessibilityReport() {
-  const { palettes, activePaletteId } = usePaletteStore()
+  const activePalette = useActivePalette()
   const { setAccessibilityTab } = useUIStore()
   const toast = useToast()
-
-  const activePalette = palettes.find((p) => p.id === activePaletteId)
   const allColours = activePalette?.categories.flatMap((cat) => cat.colours) || []
   const categoriesWithColours = activePalette?.categories.filter((cat) => cat.colours.length >= 2) || []
   const reviewedWarnings = activePalette?.reviewedWarnings || []

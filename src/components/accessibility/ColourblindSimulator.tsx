@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { AlertTriangle, Eye, Info, Check, X, Type, Square, Lightbulb, ChevronDown, ChevronUp, Lock, CheckCircle, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs'
-import { usePaletteStore } from '../../stores/paletteStore'
+import { useActivePalette, usePaletteActions } from '../../stores/paletteStore'
 import { useUIStore } from '../../stores/uiStore'
 import {
   simulateColourblindness,
@@ -26,10 +26,8 @@ import { categoryLabels } from '../../data/presets'
 
 export function ColourblindSimulator() {
   const { colourblindType, setColourblindType } = useUIStore()
-  const { palettes, activePaletteId } = usePaletteStore()
+  const activePalette = useActivePalette()
   const [showAll, setShowAll] = useState(false)
-
-  const activePalette = palettes.find((p) => p.id === activePaletteId)
   const colours = activePalette?.categories.flatMap((cat) => cat.colours) || []
   const hexValues = colours.map((c) => c.hex)
   const categoriesWithColours = activePalette?.categories.filter((cat) => cat.colours.length >= 2) || []
@@ -318,13 +316,13 @@ export function ColourblindSimulator() {
         backgroundColours={backgroundColours}
         hasRolesAssigned={hasRolesAssigned}
         colourblindType={colourblindType}
-        paletteId={activePaletteId || ''}
+        paletteId={activePalette?.id || ''}
       />
 
       {/* Accessibility warnings */}
       <AccessibilityWarnings
         categories={categoriesWithColours}
-        paletteId={activePaletteId || ''}
+        paletteId={activePalette?.id || ''}
         colourblindType={colourblindType}
       />
     </div>
@@ -365,10 +363,13 @@ function TextBackgroundContrastSection({
   colourblindType,
   paletteId,
 }: TextBackgroundContrastSectionProps) {
-  const { updateColour, markWarningReviewed, unmarkWarningReviewed } = usePaletteStore()
+  const { updateColour, markWarningReviewed, unmarkWarningReviewed } = usePaletteActions()
+  const activePalette = useActivePalette()
   const [expandedSuggestions, setExpandedSuggestions] = useState<Set<string>>(new Set())
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [showReviewed, setShowReviewed] = useState(false)
+
+  const allPaletteColours = activePalette?.categories.flatMap((cat) => cat.colours) || []
 
   const getWarningKey = (textId: string, bgId: string) =>
     `contrast:${textId}:${bgId}:${colourblindType}`
@@ -388,11 +389,6 @@ function TextBackgroundContrastSection({
   const applySuggestion = (colourId: string, newHex: string) => {
     updateColour(paletteId, colourId, { hex: newHex })
   }
-
-  // Get all palette colours for suggesting alternatives
-  const { palettes, activePaletteId: storeActivePaletteId } = usePaletteStore()
-  const activePalette = palettes.find((p) => p.id === (paletteId || storeActivePaletteId))
-  const allPaletteColours = activePalette?.categories.flatMap((cat) => cat.colours) || []
 
   // Calculate contrast for all text/background pairs under simulation
   const contrastAnalysis = useMemo(() => {
@@ -916,12 +912,12 @@ interface AccessibilityWarningsProps {
 }
 
 function AccessibilityWarnings({ categories, paletteId, colourblindType }: AccessibilityWarningsProps) {
-  const { updateColour, palettes, markWarningReviewed, unmarkWarningReviewed } = usePaletteStore()
+  const { updateColour, markWarningReviewed, unmarkWarningReviewed } = usePaletteActions()
+  const activePalette = useActivePalette()
   const [expandedPairs, setExpandedPairs] = useState<Set<string>>(new Set())
   const [isCollapsed, setIsCollapsed] = useState(false)
   const [showReviewed, setShowReviewed] = useState(false)
 
-  const activePalette = palettes.find((p) => p.id === paletteId)
   const allPaletteColours = activePalette?.categories.flatMap((cat) => cat.colours) || []
   const reviewedWarnings = activePalette?.reviewedWarnings || []
 

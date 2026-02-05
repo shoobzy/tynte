@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, memo } from 'react'
 import { motion } from 'framer-motion'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -33,7 +33,7 @@ interface ColourCardProps {
   showDetails?: boolean
 }
 
-export function ColourCard({
+export const ColourCard = memo(function ColourCard({
   colour,
   onUpdate,
   onDelete,
@@ -82,16 +82,16 @@ export function ColourCard({
 
   const textColour = getOptimalTextColour(colour.hex)
 
-  const handleCopy = async (text: string, label: string) => {
+  const handleCopy = useCallback(async (text: string, label: string) => {
     const success = await copyToClipboard(text)
     if (success) {
       toast.success(`${label} copied to clipboard`)
     } else {
       toast.error('Failed to copy')
     }
-  }
+  }, [toast])
 
-  const handleSaveEdit = () => {
+  const handleSaveEdit = useCallback(() => {
     const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/
     if (!hexRegex.test(editHex)) {
       toast.error('Invalid hex colour')
@@ -103,22 +103,22 @@ export function ColourCard({
       hex: editHex.toLowerCase(),
     })
     setIsEditing(false)
-  }
+  }, [editHex, editName, onUpdate, toast])
 
-  const handleCancelEdit = () => {
+  const discardChanges = useCallback(() => {
+    setEditName(colour.name)
+    setEditHex(colour.hex)
+    setIsEditing(false)
+    setShowDiscardConfirm(false)
+  }, [colour.name, colour.hex])
+
+  const handleCancelEdit = useCallback(() => {
     if (hasUnsavedChanges) {
       setShowDiscardConfirm(true)
     } else {
       discardChanges()
     }
-  }
-
-  const discardChanges = () => {
-    setEditName(colour.name)
-    setEditHex(colour.hex)
-    setIsEditing(false)
-    setShowDiscardConfirm(false)
-  }
+  }, [hasUnsavedChanges, discardChanges])
 
   if (isEditing) {
     return (
@@ -309,7 +309,7 @@ export function ColourCard({
       )}
     </motion.div>
   )
-}
+})
 
 interface MiniColourCardProps {
   colour: string
@@ -317,7 +317,7 @@ interface MiniColourCardProps {
   selected?: boolean
 }
 
-export function MiniColourCard({ colour, onClick, selected }: MiniColourCardProps) {
+export const MiniColourCard = memo(function MiniColourCard({ colour, onClick, selected }: MiniColourCardProps) {
   const textColour = getOptimalTextColour(colour)
 
   return (
@@ -339,4 +339,4 @@ export function MiniColourCard({ colour, onClick, selected }: MiniColourCardProp
       )}
     </motion.div>
   )
-}
+})

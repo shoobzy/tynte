@@ -43,6 +43,8 @@ export interface Palette {
   createdAt: number
   updatedAt: number
   isFavourite: boolean
+  // Reviewed accessibility warnings (format: "contrast:textId:bgId:cvdType" or "distinguish:id1:id2:cvdType")
+  reviewedWarnings?: string[]
 }
 
 export interface PalettePreset {

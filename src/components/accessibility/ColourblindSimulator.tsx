@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertTriangle, Eye, Info, Check, X, Type, Square, Lightbulb, ChevronDown, ChevronUp, Lock } from 'lucide-react'
+import { AlertTriangle, Eye, Info, Check, X, Type, Square, Lightbulb, ChevronDown, ChevronUp, Lock, CheckCircle, RotateCcw } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs'
 import { usePaletteStore } from '../../stores/paletteStore'
@@ -327,9 +327,13 @@ function TextBackgroundContrastSection({
   colourblindType,
   paletteId,
 }: TextBackgroundContrastSectionProps) {
-  const { updateColour } = usePaletteStore()
+  const { updateColour, markWarningReviewed, unmarkWarningReviewed } = usePaletteStore()
   const [expandedSuggestions, setExpandedSuggestions] = useState<Set<string>>(new Set())
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [showReviewed, setShowReviewed] = useState(false)
+
+  const getWarningKey = (textId: string, bgId: string) =>
+    `contrast:${textId}:${bgId}:${colourblindType}`
 
   const toggleSuggestion = (pairKey: string) => {
     setExpandedSuggestions((prev) => {
@@ -461,7 +465,17 @@ function TextBackgroundContrastSection({
     return null
   }
 
-  const { problemPairs, passingPairs } = contrastAnalysis
+  const { problemPairs: allProblemPairs, passingPairs } = contrastAnalysis
+  const reviewedWarnings = activePalette?.reviewedWarnings || []
+
+  // Separate reviewed and unreviewed problem pairs
+  const problemPairs = allProblemPairs.filter(
+    (p) => !reviewedWarnings.includes(getWarningKey(p.text.id, p.background.id))
+  )
+  const reviewedPairs = allProblemPairs.filter(
+    (p) => reviewedWarnings.includes(getWarningKey(p.text.id, p.background.id))
+  )
+
   const typeName = getColourblindTypeName(colourblindType).split(' ')[0]
 
   return (
@@ -580,17 +594,28 @@ function TextBackgroundContrastSection({
                           </div>
                         </div>
 
-                        {/* Suggest fix button */}
-                        {(pair.suggestedFix || pair.paletteAlternatives.length > 0) && (
+                        {/* Action buttons */}
+                        <div className="flex gap-2">
+                          {(pair.suggestedFix || pair.paletteAlternatives.length > 0) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => toggleSuggestion(pairKey)}
+                            >
+                              <Lightbulb className="h-4 w-4 mr-1" />
+                              {isExpanded ? 'Hide' : 'Suggest fix'}
+                            </Button>
+                          )}
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => toggleSuggestion(pairKey)}
+                            onClick={() => markWarningReviewed(paletteId, getWarningKey(pair.text.id, pair.background.id))}
+                            title="Mark as reviewed"
                           >
-                            <Lightbulb className="h-4 w-4 mr-1" />
-                            {isExpanded ? 'Hide' : 'Suggest fix'}
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Reviewed
                           </Button>
-                        )}
+                        </div>
                       </div>
 
                       {/* Expanded suggestion */}
@@ -743,28 +768,99 @@ function TextBackgroundContrastSection({
         </div>
       )}
 
+      {/* Reviewed pairs (collapsed) */}
+      {reviewedPairs.length > 0 && (
+        <div className="space-y-2">
+          <button
+            onClick={() => setShowReviewed(!showReviewed)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <CheckCircle className="h-4 w-4" />
+            {reviewedPairs.length} reviewed
+            {showReviewed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+
+          <AnimatePresence>
+            {showReviewed && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="space-y-2 overflow-hidden"
+              >
+                {reviewedPairs.map((pair) => {
+                  const pairKey = `${pair.text.id}-${pair.background.id}`
+
+                  return (
+                    <div
+                      key={pairKey}
+                      className="p-3 rounded-lg border border-border bg-muted/30 opacity-60"
+                    >
+                      <div className="flex items-center gap-4">
+                        {/* Original preview */}
+                        <div className="text-center">
+                          <div
+                            className="w-12 h-8 rounded flex items-center justify-center text-xs font-bold"
+                            style={{ backgroundColor: pair.background.hex, color: pair.text.hex }}
+                          >
+                            Aa
+                          </div>
+                        </div>
+
+                        {/* Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm">
+                            <span className="font-medium">{pair.text.name}</span>
+                            <span className="text-muted-foreground"> on </span>
+                            <span className="font-medium">{pair.background.name}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {pair.simulatedRatio.toFixed(1)}:1 under {typeName}
+                          </div>
+                        </div>
+
+                        {/* Unreview button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => unmarkWarningReviewed(paletteId, getWarningKey(pair.text.id, pair.background.id))}
+                          title="Mark as unreviewed"
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Unreview
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
       {/* Passing pairs summary */}
       {passingPairs.length > 0 && (
         <div className={`p-3 rounded-lg border ${
-          problemPairs.length === 0
+          problemPairs.length === 0 && reviewedPairs.length === 0
             ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
             : 'border-border bg-muted/50'
         }`}>
           <div className="flex items-center gap-2">
             <Check className={`h-4 w-4 ${
-              problemPairs.length === 0
+              problemPairs.length === 0 && reviewedPairs.length === 0
                 ? 'text-green-600 dark:text-green-400'
                 : 'text-muted-foreground'
             }`} />
             <span className={`text-sm ${
-              problemPairs.length === 0
+              problemPairs.length === 0 && reviewedPairs.length === 0
                 ? 'text-green-700 dark:text-green-300 font-medium'
                 : 'text-muted-foreground'
             }`}>
               {passingPairs.length} pair{passingPairs.length > 1 ? 's' : ''} maintain good contrast under {typeName}
             </span>
           </div>
-          {problemPairs.length === 0 && (
+          {problemPairs.length === 0 && reviewedPairs.length === 0 && (
             <p className="text-xs text-green-600 dark:text-green-400 mt-1 ml-6">
               All text/background combinations remain accessible
             </p>
@@ -782,12 +878,17 @@ interface AccessibilityWarningsProps {
 }
 
 function AccessibilityWarnings({ categories, paletteId, colourblindType }: AccessibilityWarningsProps) {
-  const { updateColour, palettes } = usePaletteStore()
+  const { updateColour, palettes, markWarningReviewed, unmarkWarningReviewed } = usePaletteStore()
   const [expandedPairs, setExpandedPairs] = useState<Set<string>>(new Set())
   const [isCollapsed, setIsCollapsed] = useState(false)
+  const [showReviewed, setShowReviewed] = useState(false)
 
   const activePalette = palettes.find((p) => p.id === paletteId)
   const allPaletteColours = activePalette?.categories.flatMap((cat) => cat.colours) || []
+  const reviewedWarnings = activePalette?.reviewedWarnings || []
+
+  const getWarningKey = (id1: string, id2: string) =>
+    `distinguish:${id1}:${id2}:${colourblindType}`
 
   const togglePair = (pairKey: string) => {
     setExpandedPairs((prev) => {
@@ -876,9 +977,24 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
     )
   }
 
-  const totalIssues = analysis.reduce((sum, cat) => sum + cat.pairs.length, 0)
+  // Separate reviewed and unreviewed pairs
+  const analysisWithReviewed = analysis.map((catIssue) => {
+    const unreviewedPairs = catIssue.pairs.filter(
+      (p) => !reviewedWarnings.includes(getWarningKey(p.colour1.id, p.colour2.id))
+    )
+    const reviewedPairs = catIssue.pairs.filter(
+      (p) => reviewedWarnings.includes(getWarningKey(p.colour1.id, p.colour2.id))
+    )
+    return { ...catIssue, unreviewedPairs, reviewedPairs }
+  })
 
-  if (totalIssues === 0) {
+  const totalUnreviewed = analysisWithReviewed.reduce((sum, cat) => sum + cat.unreviewedPairs.length, 0)
+  const totalReviewed = analysisWithReviewed.reduce((sum, cat) => sum + cat.reviewedPairs.length, 0)
+  const allReviewedPairs = analysisWithReviewed.flatMap((cat) =>
+    cat.reviewedPairs.map((p) => ({ ...p, categoryLabel: cat.categoryLabel }))
+  )
+
+  if (totalUnreviewed === 0 && totalReviewed === 0) {
     return (
       <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
         <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
@@ -895,39 +1011,41 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
 
   return (
     <div className="space-y-3">
-      <button
-        onClick={() => setIsCollapsed(!isCollapsed)}
-        className="w-full flex items-center justify-between text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
-      >
-        <span className="flex items-center gap-2">
-          <AlertTriangle className="h-4 w-4" />
-          {totalIssues} indistinguishable pair{totalIssues > 1 ? 's' : ''} within categories
-        </span>
-        {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-      </button>
-
-      <AnimatePresence>
-        {!isCollapsed && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="space-y-3 overflow-hidden"
+      {totalUnreviewed > 0 && (
+        <>
+          <button
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="w-full flex items-center justify-between text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400"
           >
-            <p className="text-sm text-muted-foreground">
-              These colour pairs may be hard to distinguish under {typeName} simulation:
-            </p>
+            <span className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              {totalUnreviewed} indistinguishable pair{totalUnreviewed > 1 ? 's' : ''} within categories
+            </span>
+            {isCollapsed ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
+          </button>
 
-            {analysis.map((catIssue) => (
-              <div
-                key={catIssue.category}
-                className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3"
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="space-y-3 overflow-hidden"
               >
-                <p className="font-medium text-amber-800 dark:text-amber-200 text-sm">
-                  {catIssue.categoryLabel}
+                <p className="text-sm text-muted-foreground">
+                  These colour pairs may be hard to distinguish under {typeName} simulation:
                 </p>
 
-                {catIssue.pairs.map((pair, pairIndex) => {
+                {analysisWithReviewed.filter((cat) => cat.unreviewedPairs.length > 0).map((catIssue) => (
+                  <div
+                    key={catIssue.category}
+                    className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg space-y-3"
+                  >
+                    <p className="font-medium text-amber-800 dark:text-amber-200 text-sm">
+                      {catIssue.categoryLabel}
+                    </p>
+
+                {catIssue.unreviewedPairs.map((pair, pairIndex) => {
                   const pairKey = `${catIssue.category}-${pair.colour1.id}-${pair.colour2.id}`
                   const isExpanded = expandedPairs.has(pairKey)
 
@@ -960,17 +1078,28 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
                           </p>
                         </div>
 
-                        {/* Suggest fix button */}
-                        {(pair.paletteAlternatives.length > 0 || pair.suggestedFix) && (
+                        {/* Action buttons */}
+                        <div className="flex gap-2">
+                          {(pair.paletteAlternatives.length > 0 || pair.suggestedFix) && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => togglePair(pairKey)}
+                            >
+                              <Lightbulb className="h-4 w-4 mr-1" />
+                              {isExpanded ? 'Hide' : 'Suggest fix'}
+                            </Button>
+                          )}
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
-                            onClick={() => togglePair(pairKey)}
+                            onClick={() => markWarningReviewed(paletteId, getWarningKey(pair.colour1.id, pair.colour2.id))}
+                            title="Mark as reviewed"
                           >
-                            <Lightbulb className="h-4 w-4 mr-1" />
-                            {isExpanded ? 'Hide' : 'Suggest fix'}
+                            <CheckCircle className="h-4 w-4 mr-1" />
+                            Reviewed
                           </Button>
-                        )}
+                        </div>
                       </div>
 
                       {/* Expanded suggestions */}
@@ -1087,6 +1216,95 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
           </motion.div>
         )}
       </AnimatePresence>
+        </>
+      )}
+
+      {/* Reviewed pairs (collapsed) */}
+      {totalReviewed > 0 && (
+        <div className="space-y-2">
+          <button
+            onClick={() => setShowReviewed(!showReviewed)}
+            className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
+          >
+            <CheckCircle className="h-4 w-4" />
+            {totalReviewed} reviewed
+            {showReviewed ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </button>
+
+          <AnimatePresence>
+            {showReviewed && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                className="space-y-2 overflow-hidden"
+              >
+                {allReviewedPairs.map((pair) => {
+                  const pairKey = `reviewed-${pair.colour1.id}-${pair.colour2.id}`
+
+                  return (
+                    <div
+                      key={pairKey}
+                      className="p-3 rounded-lg border border-border bg-muted/30 opacity-60"
+                    >
+                      <div className="flex items-center gap-3">
+                        {/* Colour pair preview */}
+                        <div className="flex rounded overflow-hidden border border-border">
+                          <div
+                            className="w-6 h-6"
+                            style={{ backgroundColor: pair.colour1.hex }}
+                            title={pair.colour1.name}
+                          />
+                          <div
+                            className="w-6 h-6"
+                            style={{ backgroundColor: pair.colour2.hex }}
+                            title={pair.colour2.name}
+                          />
+                        </div>
+
+                        {/* Details */}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm">
+                            <span className="font-medium">{pair.colour1.name}</span>
+                            <span className="text-muted-foreground"> & </span>
+                            <span className="font-medium">{pair.colour2.name}</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            {pair.categoryLabel}
+                          </div>
+                        </div>
+
+                        {/* Unreview button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => unmarkWarningReviewed(paletteId, getWarningKey(pair.colour1.id, pair.colour2.id))}
+                          title="Mark as unreviewed"
+                        >
+                          <RotateCcw className="h-4 w-4 mr-1" />
+                          Unreview
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
+
+      {/* All clear message when only reviewed items exist */}
+      {totalUnreviewed === 0 && totalReviewed > 0 && (
+        <div className="p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+          <div className="flex items-center gap-2 text-green-700 dark:text-green-300">
+            <Eye className="h-5 w-5" />
+            <span className="font-medium">
+              All distinguishability issues have been reviewed
+            </span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -41,6 +41,11 @@ interface PaletteStore {
   deleteCategory: (paletteId: string, category: ColourCategory) => void
   renameCategory: (paletteId: string, oldCategory: ColourCategory, newCategory: ColourCategory) => void
 
+  // Accessibility warning review
+  markWarningReviewed: (paletteId: string, warningKey: string) => void
+  unmarkWarningReviewed: (paletteId: string, warningKey: string) => void
+  isWarningReviewed: (paletteId: string, warningKey: string) => boolean
+
   // Getters
   getActivePalette: () => Palette | null
   getPaletteById: (id: string) => Palette | undefined
@@ -565,6 +570,39 @@ export const usePaletteStore = create<PaletteStore>()(
             }
           }),
         }))
+      },
+
+      markWarningReviewed: (paletteId, warningKey) => {
+        set((state) => ({
+          palettes: state.palettes.map((palette) => {
+            if (palette.id !== paletteId) return palette
+            const existing = palette.reviewedWarnings || []
+            if (existing.includes(warningKey)) return palette
+            return {
+              ...palette,
+              reviewedWarnings: [...existing, warningKey],
+              updatedAt: Date.now(),
+            }
+          }),
+        }))
+      },
+
+      unmarkWarningReviewed: (paletteId, warningKey) => {
+        set((state) => ({
+          palettes: state.palettes.map((palette) => {
+            if (palette.id !== paletteId) return palette
+            return {
+              ...palette,
+              reviewedWarnings: (palette.reviewedWarnings || []).filter((k) => k !== warningKey),
+              updatedAt: Date.now(),
+            }
+          }),
+        }))
+      },
+
+      isWarningReviewed: (paletteId, warningKey) => {
+        const palette = get().getPaletteById(paletteId)
+        return palette?.reviewedWarnings?.includes(warningKey) || false
       },
 
       getActivePalette: () => {

@@ -289,7 +289,7 @@ export function ColourPicker({
           <label className="text-sm font-medium text-muted-foreground mb-2 block">
             Recent Colours
           </label>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 p-1 -m-1">
             {recentColours.slice(0, 12).map((hex) => (
               <motion.button
                 key={hex}

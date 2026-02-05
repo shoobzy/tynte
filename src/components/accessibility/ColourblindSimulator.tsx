@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertTriangle, Eye, Info, Check, X, Type, Square, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
+import { AlertTriangle, Eye, Info, Check, X, Type, Square, Lightbulb, ChevronDown, ChevronUp, Lock } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs'
 import { usePaletteStore } from '../../stores/paletteStore'
@@ -239,8 +239,13 @@ export function ColourblindSimulator() {
             return (
               <div
                 key={colour.id}
-                className="bg-card border border-border rounded-lg overflow-hidden"
+                className="bg-card border border-border rounded-lg overflow-hidden relative"
               >
+                {colour.locked && (
+                  <div className="absolute top-1 right-1 z-10 bg-background/80 rounded p-0.5" title="Locked">
+                    <Lock className="h-3 w-3 text-amber-500" />
+                  </div>
+                )}
                 <div className="flex h-16">
                   <div
                     className="flex-1"
@@ -308,8 +313,8 @@ function PalettePreview({ colours, compact = false }: PalettePreviewProps) {
 }
 
 interface TextBackgroundContrastSectionProps {
-  textColours: { id: string; hex: string; name: string; role?: ColourRole }[]
-  backgroundColours: { id: string; hex: string; name: string; role?: ColourRole }[]
+  textColours: { id: string; hex: string; name: string; role?: ColourRole; locked?: boolean }[]
+  backgroundColours: { id: string; hex: string; name: string; role?: ColourRole; locked?: boolean }[]
   hasRolesAssigned: boolean
   colourblindType: ColourblindType
   paletteId: string
@@ -603,16 +608,29 @@ function TextBackgroundContrastSection({
                                 <div>
                                   <p className="text-xs text-muted-foreground mb-2">
                                     Use existing palette colour instead of <span className="font-medium">{pair.text.name}</span>:
+                                    {pair.text.locked && (
+                                      <span className="inline-flex items-center gap-1 ml-2 text-amber-600 dark:text-amber-400">
+                                        <Lock className="h-3 w-3" />
+                                        <span>Locked</span>
+                                      </span>
+                                    )}
                                   </p>
                                   <div className="flex flex-wrap gap-2">
                                     {pair.paletteAlternatives.map((alt) => (
                                       <button
                                         key={alt.id}
                                         onClick={() => {
-                                          applySuggestion(pair.text.id, alt.hex)
-                                          toggleSuggestion(pairKey)
+                                          if (!pair.text.locked) {
+                                            applySuggestion(pair.text.id, alt.hex)
+                                            toggleSuggestion(pairKey)
+                                          }
                                         }}
-                                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border hover:border-primary bg-card transition-colors"
+                                        disabled={pair.text.locked}
+                                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border bg-card transition-colors ${
+                                          pair.text.locked
+                                            ? 'border-border opacity-50 cursor-not-allowed'
+                                            : 'border-border hover:border-primary'
+                                        }`}
                                       >
                                         <div
                                           className="w-6 h-6 rounded"
@@ -636,6 +654,12 @@ function TextBackgroundContrastSection({
                                   <p className="text-xs text-muted-foreground mb-2">
                                     {pair.paletteAlternatives.length > 0 ? 'Or adjust ' : 'Adjust '}
                                     <span className="font-medium">{pair.text.name}</span> lightness:
+                                    {pair.text.locked && (
+                                      <span className="inline-flex items-center gap-1 ml-2 text-amber-600 dark:text-amber-400">
+                                        <Lock className="h-3 w-3" />
+                                        <span>Locked</span>
+                                      </span>
+                                    )}
                                   </p>
                                   <div className="flex items-center gap-4">
                                     {/* Current colour */}
@@ -689,12 +713,19 @@ function TextBackgroundContrastSection({
                                     <Button
                                       size="sm"
                                       onClick={() => {
-                                        applySuggestion(pair.text.id, pair.suggestedFix!.hex)
-                                        toggleSuggestion(pairKey)
+                                        if (!pair.text.locked) {
+                                          applySuggestion(pair.text.id, pair.suggestedFix!.hex)
+                                          toggleSuggestion(pairKey)
+                                        }
                                       }}
+                                      disabled={pair.text.locked}
                                     >
-                                      <Check className="h-3 w-3 mr-1" />
-                                      Apply
+                                      {pair.text.locked ? (
+                                        <Lock className="h-3 w-3 mr-1" />
+                                      ) : (
+                                        <Check className="h-3 w-3 mr-1" />
+                                      )}
+                                      {pair.text.locked ? 'Locked' : 'Apply'}
                                     </Button>
                                   </div>
                                 </div>
@@ -745,7 +776,7 @@ function TextBackgroundContrastSection({
 }
 
 interface AccessibilityWarningsProps {
-  categories: { category: string; colours: { id: string; hex: string; name: string }[] }[]
+  categories: { category: string; colours: { id: string; hex: string; name: string; locked?: boolean }[] }[]
   paletteId: string
   colourblindType: ColourblindType
 }
@@ -782,8 +813,8 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
       category: string
       categoryLabel: string
       pairs: {
-        colour1: { id: string; hex: string; name: string }
-        colour2: { id: string; hex: string; name: string }
+        colour1: { id: string; hex: string; name: string; locked?: boolean }
+        colour2: { id: string; hex: string; name: string; locked?: boolean }
         paletteAlternatives: { id: string; hex: string; name: string }[]
         suggestedFix: { hex: string; adjustedLightness: number } | null
       }[]
@@ -957,16 +988,29 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
                                 <div>
                                   <p className="text-xs text-muted-foreground mb-2">
                                     Replace <span className="font-medium">{pair.colour1.name}</span> with an existing palette colour:
+                                    {pair.colour1.locked && (
+                                      <span className="inline-flex items-center gap-1 ml-2 text-amber-600 dark:text-amber-400">
+                                        <Lock className="h-3 w-3" />
+                                        <span>Locked</span>
+                                      </span>
+                                    )}
                                   </p>
                                   <div className="flex flex-wrap gap-2">
                                     {pair.paletteAlternatives.map((alt) => (
                                       <button
                                         key={alt.id}
                                         onClick={() => {
-                                          applySuggestion(pair.colour1.id, alt.hex)
-                                          togglePair(pairKey)
+                                          if (!pair.colour1.locked) {
+                                            applySuggestion(pair.colour1.id, alt.hex)
+                                            togglePair(pairKey)
+                                          }
                                         }}
-                                        className="flex items-center gap-2 px-2 py-1.5 rounded-lg border border-border hover:border-primary bg-card transition-colors"
+                                        disabled={pair.colour1.locked}
+                                        className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border bg-card transition-colors ${
+                                          pair.colour1.locked
+                                            ? 'border-border opacity-50 cursor-not-allowed'
+                                            : 'border-border hover:border-primary'
+                                        }`}
                                       >
                                         <div
                                           className="w-6 h-6 rounded"
@@ -985,6 +1029,12 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
                                   <p className="text-xs text-muted-foreground mb-2">
                                     {pair.paletteAlternatives.length > 0 ? 'Or adjust ' : 'Adjust '}
                                     <span className="font-medium">{pair.colour1.name}</span> lightness:
+                                    {pair.colour1.locked && (
+                                      <span className="inline-flex items-center gap-1 ml-2 text-amber-600 dark:text-amber-400">
+                                        <Lock className="h-3 w-3" />
+                                        <span>Locked</span>
+                                      </span>
+                                    )}
                                   </p>
                                   <div className="flex items-center gap-3">
                                     <div className="text-center">
@@ -1008,12 +1058,19 @@ function AccessibilityWarnings({ categories, paletteId, colourblindType }: Acces
                                     <Button
                                       size="sm"
                                       onClick={() => {
-                                        applySuggestion(pair.colour1.id, pair.suggestedFix!.hex)
-                                        togglePair(pairKey)
+                                        if (!pair.colour1.locked) {
+                                          applySuggestion(pair.colour1.id, pair.suggestedFix!.hex)
+                                          togglePair(pairKey)
+                                        }
                                       }}
+                                      disabled={pair.colour1.locked}
                                     >
-                                      <Check className="h-3 w-3 mr-1" />
-                                      Apply
+                                      {pair.colour1.locked ? (
+                                        <Lock className="h-3 w-3 mr-1" />
+                                      ) : (
+                                        <Check className="h-3 w-3 mr-1" />
+                                      )}
+                                      {pair.colour1.locked ? 'Locked' : 'Apply'}
                                     </Button>
                                   </div>
                                 </div>

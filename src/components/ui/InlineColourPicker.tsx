@@ -234,13 +234,13 @@ export function InlineColourPicker({
       {paletteColourGroups && paletteColourGroups.some(g => g.colours.length > 0) && (
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">From palette:</p>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
+          <div className="space-y-2 max-h-48 overflow-y-auto px-1 -mx-1">
             {paletteColourGroups.filter(g => g.colours.length > 0).map((group) => (
-              <div key={group.category}>
+              <div key={group.category} className="px-1">
                 <label className="text-xs text-muted-foreground">
                   {categoryLabels[group.category] || group.category}
                 </label>
-                <div className="flex flex-wrap gap-1.5 mt-1">
+                <div className="flex flex-wrap gap-1.5 mt-1 py-1 -my-1">
                   {group.colours.map((colour, index) => (
                     <button
                       key={index}
@@ -263,7 +263,7 @@ export function InlineColourPicker({
       {!paletteColourGroups && paletteColours.length > 0 && (
         <div>
           <p className="text-xs text-muted-foreground mb-2">From palette:</p>
-          <div className="flex flex-wrap gap-1.5">
+          <div className="flex flex-wrap gap-1.5 p-1 -m-1">
             {paletteColours.map((colour, index) => (
               <button
                 key={index}

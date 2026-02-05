@@ -228,6 +228,11 @@ export const usePaletteStore = create<PaletteStore>()(
                 colours: cat.colours.map((colour) => {
                   if (colour.id !== colourId) return colour
 
+                  // Respect locked status - only allow updating the locked property itself
+                  if (colour.locked && !('locked' in updates)) {
+                    return colour
+                  }
+
                   // If hex is being updated, recalculate other colour formats and save previous
                   if (updates.hex && updates.hex.toLowerCase() !== colour.hex.toLowerCase()) {
                     return {

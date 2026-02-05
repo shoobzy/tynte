@@ -193,7 +193,7 @@ export function ComponentPreview() {
           <p className="text-xs text-muted-foreground">
             Select which shade to use as the base colour. Hover and active states use progressively darker shades.
           </p>
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-1 flex-wrap p-1 -m-1">
             {/* Auto option */}
             <button
               onClick={() => setBaseShadeIndex(null)}

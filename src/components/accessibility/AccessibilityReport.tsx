@@ -12,7 +12,6 @@ import {
   ArrowRight,
   Type,
   Square,
-  Clock,
 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { usePaletteStore } from '../../stores/paletteStore'
@@ -564,7 +563,7 @@ export function AccessibilityReport() {
                     </span>
                   ) : hasReviewedOnly ? (
                     <span className="flex items-center gap-1 text-muted-foreground">
-                      <Clock className="h-4 w-4" />
+                      <CheckCircle className="h-4 w-4" />
                       {totalReviewed} reviewed
                     </span>
                   ) : (
@@ -677,7 +676,7 @@ export function AccessibilityReport() {
                       </span>
                       {reviewedCount > 0 && (
                         <span className="text-muted-foreground flex items-center gap-1">
-                          <Clock className="h-3.5 w-3.5" />
+                          <CheckCircle className="h-3.5 w-3.5" />
                           {reviewedCount} reviewed
                         </span>
                       )}
@@ -732,7 +731,7 @@ export function AccessibilityReport() {
                       {getColourblindTypeName(type as ColourblindType).split(' ')[0]}
                     </span>
                     <span className="text-sm text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
+                      <CheckCircle className="h-4 w-4" />
                       {pairs.length} reviewed
                     </span>
                   </div>

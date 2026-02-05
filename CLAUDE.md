@@ -105,8 +105,12 @@ src/
 - **HSV Sliders**: Added Saturation and Brightness sliders below the Hue slider
   - Dynamic gradients show colour context as you adjust
   - Provides precise control alongside the visual canvas picker
+- **Grouped Palette Colours**: Palette colours now displayed grouped by category
+  - New `paletteColourGroups` prop for category-grouped display
+  - Shows category labels (Primary, Secondary, etc.) above colour swatches
+  - Scrollable container with max height for many colours
+  - Consistent with Contrast Checker and Contrast Matrix grouping
 - Eye dropper support (where browser supports it)
-- Palette colour swatches for quick selection
 - Optional "Done" button via `onClose` prop
 
 ### Slider Component Improvements
@@ -138,7 +142,7 @@ src/
 
 ### Colour Picker Usage
 - **ColourPicker** (`src/components/palette/ColourPicker.tsx`): Full-featured picker with canvas, RGB/HSL tabs, recent colours
-- **InlineColourPicker** (`src/components/ui/InlineColourPicker.tsx`): Shared component used in ColourCard edit mode and GradientGenerator. Uses HSV colour model with canvas picker + Hue/Saturation/Brightness sliders
+- **InlineColourPicker** (`src/components/ui/InlineColourPicker.tsx`): Shared component used in ColourCard edit mode, HarmonyGenerator, ScaleGenerator, and GradientGenerator. Uses HSV colour model with canvas picker + Hue/Saturation/Brightness sliders. Supports `paletteColourGroups` prop for category-grouped palette colour display.
 
 ### Colour Revert Pattern
 Colours track `previousHex` to enable undo. The `revertColour` store action swaps current and previous values, allowing toggle between two states. Revert button only shows when `previousHex` exists.

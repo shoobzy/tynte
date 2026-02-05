@@ -110,8 +110,22 @@ src/
   - Shows category labels (Primary, Secondary, etc.) above colour swatches
   - Scrollable container with max height for many colours
   - Consistent with Contrast Checker and Contrast Matrix grouping
+- **Saturation Slider Fix**: Saturation now tracked in state (like hue) to preserve slider position when brightness is 0 (black colours)
 - Eye dropper support (where browser supports it)
 - Optional "Done" button via `onClose` prop
+
+### Navigation Protection for Unsaved Changes
+- Global dirty state tracking added to UI store (`hasUnsavedEdits`)
+- `requestNavigation()` checks for unsaved edits before navigating
+- Sidebar uses `requestNavigation()` instead of direct `setCurrentView()`
+- ConfirmModal prompts user to discard or cancel when navigating with unsaved edits
+- ColourCard, GradientCard, and PaletteManager register editing state with UI store
+- Cleanup on component unmount resets dirty state
+
+### ContrastChecker Enhancement
+- Replaced basic `ColourInput` with full `InlineColourPicker` for both foreground and background colours
+- Each picker includes canvas, HSV sliders, hex input, eye dropper, and grouped palette colours
+- Removed redundant "Pick from Palette" collapsible section (now integrated into pickers)
 
 ### Slider Component Improvements
 - Cursor changes to `grab` on hover, `grabbing` while dragging
@@ -142,7 +156,7 @@ src/
 
 ### Colour Picker Usage
 - **ColourPicker** (`src/components/palette/ColourPicker.tsx`): Full-featured picker with canvas, RGB/HSL tabs, recent colours
-- **InlineColourPicker** (`src/components/ui/InlineColourPicker.tsx`): Shared component used in ColourCard edit mode, HarmonyGenerator, ScaleGenerator, and GradientGenerator. Uses HSV colour model with canvas picker + Hue/Saturation/Brightness sliders. Supports `paletteColourGroups` prop for category-grouped palette colour display.
+- **InlineColourPicker** (`src/components/ui/InlineColourPicker.tsx`): Shared component used in ColourCard edit mode, ContrastChecker, HarmonyGenerator, ScaleGenerator, and GradientGenerator. Uses HSV colour model with canvas picker + Hue/Saturation/Brightness sliders. Supports `paletteColourGroups` prop for category-grouped palette colour display. Tracks hue and saturation in local state to preserve slider positions when values are meaningless in hex (hue when s=0, saturation when v=0).
 
 ### Colour Revert Pattern
 Colours track `previousHex` to enable undo. The `revertColour` store action swaps current and previous values, allowing toggle between two states. Revert button only shows when `previousHex` exists.
@@ -152,6 +166,9 @@ The preview uses Primary category colours as the reference for shade selection. 
 
 ### Category Select Modal
 `CategorySelectModal` combines default categories with custom categories from the active palette. Used when adding colours from generators (Harmony, Scale).
+
+### Navigation Protection Pattern
+Components with edit modes (ColourCard, GradientCard, PaletteManager) register their dirty state with the UI store using `setHasUnsavedEdits()`. The Sidebar uses `requestNavigation()` instead of `setCurrentView()` to check for unsaved changes before navigating. When dirty, a ConfirmModal prompts the user. `confirmNavigation()` proceeds and clears dirty state; `cancelNavigation()` stays on current view. Components clean up with `useEffect` return to reset dirty state on unmount.
 
 ### Toast Notifications
 Use `useToast()` hook for notifications: `toast.success()`, `toast.error()`, `toast.warning()`

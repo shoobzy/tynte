@@ -44,6 +44,7 @@ src/
 - CSS variables for theme colours (defined in index.css)
 - Consistent spacing and sizing patterns
 - Dark mode support via class-based theming
+- Icons with `text-primary` on dark backgrounds (cards) should also use `dark:text-violet-400` for visibility
 
 ### State
 - Zustand stores for global state
@@ -214,6 +215,17 @@ Accessibility warnings in ColourblindSimulator can be marked as "reviewed" to ac
 - Store functions: `markWarningReviewed()`, `unmarkWarningReviewed()`, `isWarningReviewed()`
 - Reviewed warnings appear in a collapsed section with option to "Unreview"
 - Persists with palette in localStorage
+
+**ColourblindSimulator badges:**
+- Show only unreviewed warning count (not total)
+- When all warnings for a CVD type are reviewed, show total with CheckCircle icon in muted style
+- Badges have `title` attributes explaining the counts
+
+**AccessibilityReport reviewed tracking:**
+- Tracks reviewed status for both category distinguishability issues and simulated contrast issues
+- Summary shows "X issues · Y reviewed" for both category and simulated contrast
+- CVD type breakdown shows "(+N)" for reviewed alongside unreviewed counts
+- Types with all issues reviewed show CheckCircle icon + "X reviewed" in muted text
 
 ### Slider Component
 When using framer-motion `whileHover`/`whileTap` with positioned elements, separate the positioning (outer div with translate) from the animation (inner motion.div with scale) to prevent transform conflicts. Sliders use `cursor-grab`/`cursor-grabbing` for drag feedback. The slider uses `p-1 -m-1` on an outer wrapper to extend the clickable hit area by 4px on all sides without affecting layout - this makes it easier to grab the thumb at extreme positions.

@@ -137,9 +137,9 @@ export function Slider({
         </div>
       )}
 
-      {/* Outer container with padding to extend clickable area for thumb at edges */}
+      {/* Outer container extends clickable area for thumb at edges */}
       <div
-        className={`relative px-2 -mx-2 py-2 -my-2 ${disabled ? 'opacity-60 cursor-not-allowed' : isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`relative p-1 -m-1 ${disabled ? 'opacity-60 cursor-not-allowed' : isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         role="slider"
@@ -152,7 +152,7 @@ export function Slider({
       >
       <div
         ref={trackRef}
-        className="relative h-2 rounded-full mx-2"
+        className="relative h-2 rounded-full"
         style={{
           background: gradient || 'hsl(var(--muted))',
         }}

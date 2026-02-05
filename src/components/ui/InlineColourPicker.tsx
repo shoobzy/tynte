@@ -151,28 +151,26 @@ export function InlineColourPicker({
 
   return (
     <div className="p-3 bg-muted/50 rounded-lg space-y-3">
-      {/* Canvas picker - outer padding prevents thumb clipping */}
-      <div className="p-2">
-        <div className="relative">
-          <canvas
-            ref={canvasRef}
-            width={280}
-            height={120}
-            className="w-full h-28 cursor-crosshair border border-border rounded-lg block"
-            onClick={handleCanvasClick}
-          />
-          {/* Current colour indicator */}
-          <div
-            className="absolute w-3.5 h-3.5 rounded-full border-2 border-white pointer-events-none"
-            style={{
-              backgroundColor: value,
-              left: `${hsv.s}%`,
-              top: `${100 - hsv.v}%`,
-              transform: 'translate(-50%, -50%)',
-              boxShadow: '0 0 0 1.5px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3)',
-            }}
-          />
-        </div>
+      {/* Canvas picker */}
+      <div className="relative">
+        <canvas
+          ref={canvasRef}
+          width={280}
+          height={120}
+          className="w-full h-28 cursor-crosshair border border-border rounded-lg block"
+          onClick={handleCanvasClick}
+        />
+        {/* Current colour indicator */}
+        <div
+          className="absolute w-3.5 h-3.5 rounded-full border-2 border-white pointer-events-none"
+          style={{
+            backgroundColor: value,
+            left: `${hsv.s}%`,
+            top: `${100 - hsv.v}%`,
+            transform: 'translate(-50%, -50%)',
+            boxShadow: '0 0 0 1.5px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3)',
+          }}
+        />
       </div>
 
       {/* HSV sliders */}

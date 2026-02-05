@@ -136,6 +136,15 @@ src/
 - `paletteStore.updateColour()` checks locked status before applying changes
 - Provides visual feedback so users understand why suggestions can't be applied
 
+### Colourblind Simulator "Mark as Reviewed" Feature
+- Accessibility warnings can be marked as "Reviewed" to acknowledge intentional design choices
+- Reviewed warnings move to a collapsed section, reducing noise in the main view
+- Each warning has a "Reviewed" button next to "Suggest fix"
+- Reviewed section shows "Unreview" button to restore warnings if needed
+- Warnings are stored persistently with the palette (`reviewedWarnings` field)
+- Warning keys are unique per CVD type and colour pair: `contrast:id1:id2:cvdType` or `distinguish:id1:id2:cvdType`
+- Applies to both text/background contrast warnings and distinguishability warnings
+
 ### UI Contrast Accessibility Fixes
 - Fixed `text-muted-foreground` contrast issues on light backgrounds
 - Changed `bg-muted/30` to `bg-muted/50` throughout app for better visibility
@@ -198,6 +207,13 @@ Colours have an optional `locked` property. When true:
 - ColourCard shows lock icon and prevents editing
 - ColourblindSimulator shows lock indicators and disables Apply buttons
 - Useful for protecting brand colours from accidental modification
+
+### Reviewed Warnings Pattern
+Accessibility warnings in ColourblindSimulator can be marked as "reviewed" to acknowledge intentional design choices without fixing them. Stored in `palette.reviewedWarnings` as an array of unique keys:
+- Format: `contrast:textId:bgId:cvdType` or `distinguish:id1:id2:cvdType`
+- Store functions: `markWarningReviewed()`, `unmarkWarningReviewed()`, `isWarningReviewed()`
+- Reviewed warnings appear in a collapsed section with option to "Unreview"
+- Persists with palette in localStorage
 
 ### Slider Component
 When using framer-motion `whileHover`/`whileTap` with positioned elements, separate the positioning (outer div with translate) from the animation (inner motion.div with scale) to prevent transform conflicts. Sliders use `cursor-grab`/`cursor-grabbing` for drag feedback.

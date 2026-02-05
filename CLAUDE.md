@@ -126,6 +126,22 @@ src/
 - Replaced basic `ColourInput` with full `InlineColourPicker` for both foreground and background colours
 - Each picker includes canvas, HSV sliders, hex input, eye dropper, and grouped palette colours
 - Removed redundant "Pick from Palette" collapsible section (now integrated into pickers)
+- Removed redundant Apply button - colours now save directly when changed
+- Reordered layout: Preview/scores above colour pickers for better UX
+
+### Colourblind Simulator Locked Colours
+- Locked colours display a lock icon indicator in individual colour cards
+- Apply buttons and palette alternatives are disabled for locked colours
+- Shows "Locked" label with lock icon when colours cannot be modified
+- `paletteStore.updateColour()` checks locked status before applying changes
+- Provides visual feedback so users understand why suggestions can't be applied
+
+### UI Contrast Accessibility Fixes
+- Fixed `text-muted-foreground` contrast issues on light backgrounds
+- Changed `bg-muted/30` to `bg-muted/50` throughout app for better visibility
+- Updated disabled opacity from 50% to 60% for better contrast
+- Fixed scrollbar colours for better visibility
+- Improved contrast in Tabs, Button, Input, Slider, Modal, and CategoryGroup components
 
 ### Slider Component Improvements
 - Cursor changes to `grab` on hover, `grabbing` while dragging
@@ -172,6 +188,16 @@ Components with edit modes (ColourCard, GradientCard, PaletteManager) register t
 
 ### Toast Notifications
 Use `useToast()` hook for notifications: `toast.success()`, `toast.error()`, `toast.warning()`
+
+### Ring Clipping Prevention
+When colour swatches have selection rings (`ring-2 ring-offset-2`), the ring-offset extends outside the container bounds and gets clipped. Fix with padding pattern: `p-1 -m-1` on the container (or `px-1 -mx-1` / `py-1 -my-1` for specific axes). The negative margin compensates for the padding so layout isn't affected. Applied in: InlineColourPicker, ContrastMatrix, ColourPicker, ComponentPreview.
+
+### Locked Colours Pattern
+Colours have an optional `locked` property. When true:
+- `paletteStore.updateColour()` rejects changes (except to the `locked` property itself)
+- ColourCard shows lock icon and prevents editing
+- ColourblindSimulator shows lock indicators and disables Apply buttons
+- Useful for protecting brand colours from accidental modification
 
 ### Slider Component
 When using framer-motion `whileHover`/`whileTap` with positioned elements, separate the positioning (outer div with translate) from the animation (inner motion.div with scale) to prevent transform conflicts. Sliders use `cursor-grab`/`cursor-grabbing` for drag feedback.

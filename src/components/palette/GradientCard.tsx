@@ -4,6 +4,7 @@ import { Copy, Trash2, Pencil, Check, X } from 'lucide-react'
 import { Gradient } from '../../types/colour'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { ConfirmModal } from '../ui/ConfirmModal'
 import { useToast } from '../ui/Toast'
 import { copyToClipboard } from '../../utils/helpers'
 
@@ -34,9 +35,11 @@ function generateCSSGradient(gradient: Gradient): string {
 export function GradientCard({ gradient, onUpdate, onDelete }: GradientCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(gradient.name)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const toast = useToast()
 
   const cssGradient = generateCSSGradient(gradient)
+  const hasUnsavedChanges = isEditing && editName !== gradient.name
 
   const handleCopy = async () => {
     const success = await copyToClipboard(cssGradient)
@@ -51,37 +54,58 @@ export function GradientCard({ gradient, onUpdate, onDelete }: GradientCardProps
   }
 
   const handleCancelEdit = () => {
+    if (hasUnsavedChanges) {
+      setShowDiscardConfirm(true)
+    } else {
+      discardChanges()
+    }
+  }
+
+  const discardChanges = () => {
     setEditName(gradient.name)
     setIsEditing(false)
+    setShowDiscardConfirm(false)
   }
 
   if (isEditing) {
     return (
-      <motion.div
-        layout
-        className="bg-card border border-border rounded-lg p-3 space-y-3"
-      >
-        <div
-          className="h-16 rounded-md border border-border"
-          style={{ background: cssGradient }}
+      <>
+        <motion.div
+          layout
+          className="bg-card border border-border rounded-lg p-3 space-y-3"
+        >
+          <div
+            className="h-16 rounded-md border border-border"
+            style={{ background: cssGradient }}
+          />
+          <Input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Gradient name"
+            className="text-sm"
+          />
+          <div className="flex gap-2 justify-end">
+            <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSaveEdit}>
+              <Check className="h-4 w-4 mr-1" />
+              Save
+            </Button>
+          </div>
+        </motion.div>
+
+        <ConfirmModal
+          isOpen={showDiscardConfirm}
+          onClose={() => setShowDiscardConfirm(false)}
+          onConfirm={discardChanges}
+          title="Discard changes?"
+          description="You have unsaved changes to this gradient name. Are you sure you want to discard them?"
+          confirmLabel="Discard"
+          variant="destructive"
         />
-        <Input
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          placeholder="Gradient name"
-          className="text-sm"
-        />
-        <div className="flex gap-2 justify-end">
-          <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
-            <X className="h-4 w-4 mr-1" />
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSaveEdit}>
-            <Check className="h-4 w-4 mr-1" />
-            Save
-          </Button>
-        </div>
-      </motion.div>
+      </>
     )
   }
 

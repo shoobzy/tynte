@@ -41,6 +41,7 @@ export function PaletteManager() {
 
   const [isEditingName, setIsEditingName] = useState(false)
   const [editedName, setEditedName] = useState('')
+  const [showNameDiscardConfirm, setShowNameDiscardConfirm] = useState(false)
   const [addCategoryOpen, setAddCategoryOpen] = useState(false)
   const [newCategoryName, setNewCategoryName] = useState('')
   const [gradientsExpanded, setGradientsExpanded] = useState(true)
@@ -54,11 +55,29 @@ export function PaletteManager() {
     }
   }, [activePalette])
 
+  const hasUnsavedNameChanges = isEditingName && activePalette && editedName.trim() !== activePalette.name
+
   const handleSaveName = () => {
     if (activePalette && editedName.trim()) {
       updatePalette(activePalette.id, { name: editedName.trim() })
     }
     setIsEditingName(false)
+  }
+
+  const handleCancelNameEdit = () => {
+    if (hasUnsavedNameChanges) {
+      setShowNameDiscardConfirm(true)
+    } else {
+      discardNameChanges()
+    }
+  }
+
+  const discardNameChanges = () => {
+    if (activePalette) {
+      setEditedName(activePalette.name)
+    }
+    setIsEditingName(false)
+    setShowNameDiscardConfirm(false)
   }
 
   const handleAddColour = (hex: string, category: ColourCategory) => {
@@ -153,7 +172,7 @@ export function PaletteManager() {
               <Button
                 variant="ghost"
                 size="icon"
-                onClick={() => setIsEditingName(false)}
+                onClick={handleCancelNameEdit}
                 title="Cancel"
               >
                 <X className="h-4 w-4" />
@@ -362,6 +381,17 @@ export function PaletteManager() {
         title="Clear all gradients?"
         description={`This will remove all ${activePalette?.gradients.length || 0} gradient${(activePalette?.gradients.length || 0) !== 1 ? 's' : ''} from this palette. This action cannot be undone.`}
         confirmLabel="Clear All"
+        variant="destructive"
+      />
+
+      {/* Discard Name Changes Confirmation Modal */}
+      <ConfirmModal
+        isOpen={showNameDiscardConfirm}
+        onClose={() => setShowNameDiscardConfirm(false)}
+        onConfirm={discardNameChanges}
+        title="Discard changes?"
+        description="You have unsaved changes to the palette name. Are you sure you want to discard them?"
+        confirmLabel="Discard"
         variant="destructive"
       />
     </div>

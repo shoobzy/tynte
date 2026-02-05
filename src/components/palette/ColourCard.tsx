@@ -17,6 +17,7 @@ import { Colour } from '../../types/colour'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { InlineColourPicker } from '../ui/InlineColourPicker'
+import { ConfirmModal } from '../ui/ConfirmModal'
 import { useToast } from '../ui/Toast'
 import { copyToClipboard } from '../../utils/helpers'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
@@ -42,6 +43,7 @@ export function ColourCard({
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(colour.name)
   const [editHex, setEditHex] = useState(colour.hex)
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const toast = useToast()
 
   // Sync edit state when colour changes externally (e.g., from colourblind suggestions)
@@ -49,6 +51,12 @@ export function ColourCard({
     setEditName(colour.name)
     setEditHex(colour.hex)
   }, [colour.name, colour.hex])
+
+  // Check if there are unsaved changes
+  const hasUnsavedChanges = isEditing && (
+    editName !== colour.name ||
+    editHex.toLowerCase() !== colour.hex.toLowerCase()
+  )
 
   const {
     attributes,
@@ -90,40 +98,61 @@ export function ColourCard({
   }
 
   const handleCancelEdit = () => {
+    if (hasUnsavedChanges) {
+      setShowDiscardConfirm(true)
+    } else {
+      discardChanges()
+    }
+  }
+
+  const discardChanges = () => {
     setEditName(colour.name)
     setEditHex(colour.hex)
     setIsEditing(false)
+    setShowDiscardConfirm(false)
   }
 
   if (isEditing) {
     return (
-      <motion.div
-        layout
-        className="bg-card border border-border rounded-lg p-3 space-y-3"
-      >
-        <Input
-          value={editName}
-          onChange={(e) => setEditName(e.target.value)}
-          placeholder="Colour name"
-          className="h-8 text-sm"
+      <>
+        <motion.div
+          layout
+          className="bg-card border border-border rounded-lg p-3 space-y-3"
+        >
+          <Input
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            placeholder="Colour name"
+            className="h-8 text-sm"
+          />
+          <InlineColourPicker
+            value={editHex}
+            onChange={setEditHex}
+            onError={(msg) => toast.error(msg)}
+            onSuccess={(msg) => toast.success(msg)}
+          />
+          <div className="flex gap-2 justify-end">
+            <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
+              <X className="h-4 w-4 mr-1" />
+              Cancel
+            </Button>
+            <Button size="sm" onClick={handleSaveEdit}>
+              <Check className="h-4 w-4 mr-1" />
+              Save
+            </Button>
+          </div>
+        </motion.div>
+
+        <ConfirmModal
+          isOpen={showDiscardConfirm}
+          onClose={() => setShowDiscardConfirm(false)}
+          onConfirm={discardChanges}
+          title="Discard changes?"
+          description="You have unsaved changes to this colour. Are you sure you want to discard them?"
+          confirmLabel="Discard"
+          variant="destructive"
         />
-        <InlineColourPicker
-          value={editHex}
-          onChange={setEditHex}
-          onError={(msg) => toast.error(msg)}
-          onSuccess={(msg) => toast.success(msg)}
-        />
-        <div className="flex gap-2 justify-end">
-          <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
-            <X className="h-4 w-4 mr-1" />
-            Cancel
-          </Button>
-          <Button size="sm" onClick={handleSaveEdit}>
-            <Check className="h-4 w-4 mr-1" />
-            Save
-          </Button>
-        </div>
-      </motion.div>
+      </>
     )
   }
 

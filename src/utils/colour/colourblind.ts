@@ -265,13 +265,13 @@ export function getColourblindTypeName(type: ColourblindType): string {
  */
 export function getColourblindTypeDescription(type: ColourblindType): string {
   const descriptions: Record<ColourblindType, string> = {
-    protanopia: 'Cannot perceive red light. Affects ~1% of males.',
-    deuteranopia: 'Cannot perceive green light. Affects ~1% of males.',
-    tritanopia: 'Cannot perceive blue light. Very rare (<0.01%).',
-    achromatopsia: 'Cannot perceive any colour. Extremely rare.',
-    protanomaly: 'Reduced sensitivity to red light. Affects ~1% of males.',
-    deuteranomaly: 'Reduced sensitivity to green light. Affects ~5% of males.',
-    tritanomaly: 'Reduced sensitivity to blue light. Very rare.',
+    protanopia: 'Cannot perceive red light. Affects ~1% of people.',
+    deuteranopia: 'Cannot perceive green light. Affects ~1% of people.',
+    tritanopia: 'Cannot perceive blue light. Rare condition.',
+    achromatopsia: 'Cannot perceive any colour. Very rare condition.',
+    protanomaly: 'Reduced sensitivity to red light. Affects ~1% of people.',
+    deuteranomaly: 'Reduced sensitivity to green light. Most common CVD type.',
+    tritanomaly: 'Reduced sensitivity to blue light. Rare condition.',
   }
   return descriptions[type]
 }

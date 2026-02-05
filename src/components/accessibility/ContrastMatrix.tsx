@@ -275,13 +275,13 @@ function RoleSection({ title, icon, targetRole, categories, accentColour, onTogg
           )}
         </div>
       </div>
-      <div className="p-3 space-y-3 max-h-64 overflow-y-auto -mx-1 px-1">
+      <div className="px-4 py-3 space-y-3 max-h-64 overflow-y-auto">
         {categories.map((category) => (
-          <div key={category.category} className="px-1">
+          <div key={category.category}>
             <label className="text-xs text-muted-foreground">
               {categoryLabels[category.category] || category.category}
             </label>
-            <div className="flex flex-wrap gap-1.5 mt-1 py-1 -my-1">
+            <div className="flex flex-wrap gap-1.5 mt-1 p-1 -m-1">
               {category.colours.map((colour) => {
                 const selected = isSelected(colour.role)
 

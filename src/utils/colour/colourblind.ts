@@ -3,6 +3,52 @@ import { hexToRgb, rgbToHex, hexToHsl, hslToHex } from './conversions'
 import { getContrastRatioFromHex } from './contrast'
 
 /**
+ * Simple LRU cache for colour simulations
+ * Caches simulation results to avoid recalculating the same colours
+ */
+class LRUCache<K, V> {
+  private cache = new Map<K, V>()
+  private readonly maxSize: number
+
+  constructor(maxSize: number = 500) {
+    this.maxSize = maxSize
+  }
+
+  get(key: K): V | undefined {
+    if (!this.cache.has(key)) return undefined
+    // Move to end (most recently used)
+    const value = this.cache.get(key)!
+    this.cache.delete(key)
+    this.cache.set(key, value)
+    return value
+  }
+
+  set(key: K, value: V): void {
+    if (this.cache.has(key)) {
+      this.cache.delete(key)
+    } else if (this.cache.size >= this.maxSize) {
+      // Delete oldest entry (first item in map)
+      const firstKey = this.cache.keys().next().value
+      if (firstKey !== undefined) {
+        this.cache.delete(firstKey)
+      }
+    }
+    this.cache.set(key, value)
+  }
+
+  get size(): number {
+    return this.cache.size
+  }
+
+  clear(): void {
+    this.cache.clear()
+  }
+}
+
+// Cache for CVD simulations - key format: "hex:type"
+const simulationCache = new LRUCache<string, string>(500)
+
+/**
  * Transformation matrices for different types of colour blindness
  * Based on research by Machado, Oliveira, and Fernandes (2009)
  */
@@ -74,12 +120,34 @@ function applyMatrix(rgb: RGB, matrix: number[][]): RGB {
 
 /**
  * Simulate how a colour appears to someone with colour blindness
+ * Results are cached to avoid recalculating the same colour/type combinations
  */
 export function simulateColourblindness(hex: string, type: ColourblindType): string {
+  const cacheKey = `${hex.toLowerCase()}:${type}`
+  const cached = simulationCache.get(cacheKey)
+  if (cached) return cached
+
   const rgb = hexToRgb(hex)
   const matrix = colourblindMatrices[type]
   const simulated = applyMatrix(rgb, matrix)
-  return rgbToHex(simulated)
+  const result = rgbToHex(simulated)
+
+  simulationCache.set(cacheKey, result)
+  return result
+}
+
+/**
+ * Clear the CVD simulation cache (useful for testing or memory management)
+ */
+export function clearSimulationCache(): void {
+  simulationCache.clear()
+}
+
+/**
+ * Get the current size of the simulation cache
+ */
+export function getSimulationCacheSize(): number {
+  return simulationCache.size
 }
 
 /**

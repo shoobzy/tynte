@@ -1,22 +1,33 @@
-import { useEffect } from 'react'
+import { useEffect, lazy, Suspense } from 'react'
 import { Layout } from './components/layout/Layout'
 import { PaletteManager } from './components/palette/PaletteManager'
-import { ContrastChecker } from './components/accessibility/ContrastChecker'
-import { ContrastMatrix } from './components/accessibility/ContrastMatrix'
-import { ColourblindSimulator } from './components/accessibility/ColourblindSimulator'
-import { AccessibilityReport } from './components/accessibility/AccessibilityReport'
-import { HarmonyGenerator } from './components/generators/HarmonyGenerator'
-import { ScaleGenerator } from './components/generators/ScaleGenerator'
-import { GradientGenerator } from './components/generators/GradientGenerator'
-import { ImageExtractor } from './components/generators/ImageExtractor'
-import { ComponentPreview } from './components/preview/ComponentPreview'
-import { CSSExport } from './components/export/CSSExport'
-import { TailwindExport } from './components/export/TailwindExport'
-import { FigmaExport } from './components/export/FigmaExport'
 import { ExportModal } from './components/export/ExportModal'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from './components/ui/Tabs'
 import { usePreferencesStore } from './stores/preferencesStore'
 import { useUIStore } from './stores/uiStore'
+
+// Lazy load heavy components for code splitting
+const ContrastChecker = lazy(() => import('./components/accessibility/ContrastChecker').then(m => ({ default: m.ContrastChecker })))
+const ContrastMatrix = lazy(() => import('./components/accessibility/ContrastMatrix').then(m => ({ default: m.ContrastMatrix })))
+const ColourblindSimulator = lazy(() => import('./components/accessibility/ColourblindSimulator').then(m => ({ default: m.ColourblindSimulator })))
+const AccessibilityReport = lazy(() => import('./components/accessibility/AccessibilityReport').then(m => ({ default: m.AccessibilityReport })))
+const HarmonyGenerator = lazy(() => import('./components/generators/HarmonyGenerator').then(m => ({ default: m.HarmonyGenerator })))
+const ScaleGenerator = lazy(() => import('./components/generators/ScaleGenerator').then(m => ({ default: m.ScaleGenerator })))
+const GradientGenerator = lazy(() => import('./components/generators/GradientGenerator').then(m => ({ default: m.GradientGenerator })))
+const ImageExtractor = lazy(() => import('./components/generators/ImageExtractor').then(m => ({ default: m.ImageExtractor })))
+const ComponentPreview = lazy(() => import('./components/preview/ComponentPreview').then(m => ({ default: m.ComponentPreview })))
+const CSSExport = lazy(() => import('./components/export/CSSExport').then(m => ({ default: m.CSSExport })))
+const TailwindExport = lazy(() => import('./components/export/TailwindExport').then(m => ({ default: m.TailwindExport })))
+const FigmaExport = lazy(() => import('./components/export/FigmaExport').then(m => ({ default: m.FigmaExport })))
+
+// Loading fallback for lazy components
+function LoadingFallback() {
+  return (
+    <div className="flex items-center justify-center py-12">
+      <div className="animate-pulse text-muted-foreground">Loading...</div>
+    </div>
+  )
+}
 
 function App() {
   const { initializeTheme } = usePreferencesStore()
@@ -48,16 +59,24 @@ function App() {
                 <TabsTrigger value="report">Report</TabsTrigger>
               </TabsList>
               <TabsContent value="contrast">
-                <ContrastChecker />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ContrastChecker />
+                </Suspense>
               </TabsContent>
               <TabsContent value="matrix">
-                <ContrastMatrix />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ContrastMatrix />
+                </Suspense>
               </TabsContent>
               <TabsContent value="colourblind">
-                <ColourblindSimulator />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ColourblindSimulator />
+                </Suspense>
               </TabsContent>
               <TabsContent value="report">
-                <AccessibilityReport />
+                <Suspense fallback={<LoadingFallback />}>
+                  <AccessibilityReport />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </div>
@@ -80,16 +99,24 @@ function App() {
                 <TabsTrigger value="extract">Image Extract</TabsTrigger>
               </TabsList>
               <TabsContent value="harmony">
-                <HarmonyGenerator />
+                <Suspense fallback={<LoadingFallback />}>
+                  <HarmonyGenerator />
+                </Suspense>
               </TabsContent>
               <TabsContent value="scale">
-                <ScaleGenerator />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ScaleGenerator />
+                </Suspense>
               </TabsContent>
               <TabsContent value="gradient">
-                <GradientGenerator />
+                <Suspense fallback={<LoadingFallback />}>
+                  <GradientGenerator />
+                </Suspense>
               </TabsContent>
               <TabsContent value="extract">
-                <ImageExtractor />
+                <Suspense fallback={<LoadingFallback />}>
+                  <ImageExtractor />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </div>
@@ -104,7 +131,9 @@ function App() {
                 See how your palette looks on real UI components
               </p>
             </div>
-            <ComponentPreview />
+            <Suspense fallback={<LoadingFallback />}>
+              <ComponentPreview />
+            </Suspense>
           </div>
         )
 
@@ -124,13 +153,19 @@ function App() {
                 <TabsTrigger value="figma">Design Tokens</TabsTrigger>
               </TabsList>
               <TabsContent value="css">
-                <CSSExport />
+                <Suspense fallback={<LoadingFallback />}>
+                  <CSSExport />
+                </Suspense>
               </TabsContent>
               <TabsContent value="tailwind">
-                <TailwindExport />
+                <Suspense fallback={<LoadingFallback />}>
+                  <TailwindExport />
+                </Suspense>
               </TabsContent>
               <TabsContent value="figma">
-                <FigmaExport />
+                <Suspense fallback={<LoadingFallback />}>
+                  <FigmaExport />
+                </Suspense>
               </TabsContent>
             </Tabs>
           </div>

@@ -8,4 +8,20 @@ export default defineConfig({
       '@': '/src',
     },
   },
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Core React runtime
+          'vendor-react': ['react', 'react-dom'],
+          // Animation library (heavy)
+          'vendor-framer': ['framer-motion'],
+          // State management
+          'vendor-zustand': ['zustand'],
+          // Icons library
+          'vendor-lucide': ['lucide-react'],
+        },
+      },
+    },
+  },
 })

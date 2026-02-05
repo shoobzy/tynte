@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Upload, Plus, Copy, Image as ImageIcon, X } from 'lucide-react'
 import { Button } from '../ui/Button'
@@ -7,9 +7,10 @@ import { useToast } from '../ui/Toast'
 import { usePaletteStore } from '../../stores/paletteStore'
 import { copyToClipboard } from '../../utils/helpers'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
-import { rgbToHex } from '../../utils/colour/conversions'
 import { ColourCategory } from '../../types/palette'
 import { CategorySelectModal } from './CategorySelectModal'
+import ColourExtractorWorker from '../../workers/colourExtractor.worker?worker'
+import type { WorkerResult } from '../../workers/colourExtractor.worker'
 
 interface ExtractedColour {
   hex: string
@@ -29,6 +30,34 @@ export function ImageExtractor() {
 
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const workerRef = useRef<Worker | null>(null)
+
+  // Initialize and clean up the worker
+  useEffect(() => {
+    workerRef.current = new ColourExtractorWorker()
+
+    workerRef.current.onmessage = (event: MessageEvent<WorkerResult>) => {
+      const { type } = event.data
+
+      if (type === 'result') {
+        setColours(event.data.colours)
+        setIsLoading(false)
+      } else if (type === 'error') {
+        toast.error('Failed to extract colours')
+        setIsLoading(false)
+      }
+    }
+
+    workerRef.current.onerror = () => {
+      toast.error('Worker error occurred')
+      setIsLoading(false)
+    }
+
+    return () => {
+      workerRef.current?.terminate()
+      workerRef.current = null
+    }
+  }, [toast])
 
   const extractColours = useCallback(
     (imageUrl: string) => {
@@ -53,43 +82,18 @@ export function ImageExtractor() {
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height)
-        const pixels = imageData.data
 
-        // Collect colours
-        const colourCounts = new Map<string, number>()
-
-        for (let i = 0; i < pixels.length; i += 4) {
-          const r = pixels[i]
-          const g = pixels[i + 1]
-          const b = pixels[i + 2]
-          const a = pixels[i + 3]
-
-          // Skip transparent pixels
-          if (a < 128) continue
-
-          // Quantize colours to reduce variety
-          const qr = Math.round(r / 32) * 32
-          const qg = Math.round(g / 32) * 32
-          const qb = Math.round(b / 32) * 32
-
-          const hex = rgbToHex({ r: qr, g: qg, b: qb })
-
-          colourCounts.set(hex, (colourCounts.get(hex) || 0) + 1)
+        // Send pixel data to worker for processing
+        if (workerRef.current) {
+          workerRef.current.postMessage({
+            type: 'extract',
+            pixels: imageData.data,
+            colourCount,
+          })
+        } else {
+          toast.error('Worker not available')
+          setIsLoading(false)
         }
-
-        // Sort by frequency and take top colours
-        const totalPixels = pixels.length / 4
-        const sortedColours = Array.from(colourCounts.entries())
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, colourCount)
-          .map(([hex, count]) => ({
-            hex,
-            count,
-            percentage: Math.round((count / totalPixels) * 100 * 10) / 10,
-          }))
-
-        setColours(sortedColours)
-        setIsLoading(false)
       }
 
       img.onerror = () => {

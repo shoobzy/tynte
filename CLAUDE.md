@@ -21,9 +21,13 @@ src/
 │   ├── generators/   # HarmonyGenerator, ScaleGenerator, GradientGenerator, ImageExtractor
 │   ├── accessibility/# ContrastChecker, ContrastMatrix, ColourblindSimulator, AccessibilityReport
 │   ├── export/       # ExportModal, CSSExport, TailwindExport, FigmaExport
-│   └── preview/      # ComponentPreview
+│   ├── preview/      # ComponentPreview
+│   └── dev/          # DevProfiler and development utilities
 ├── stores/           # Zustand stores (paletteStore, uiStore, preferencesStore)
-├── utils/colour/     # Colour conversion, contrast, harmony utilities
+├── utils/
+│   ├── colour/       # Colour conversion, contrast, harmony utilities
+│   └── performance.ts # Benchmarking and profiling utilities
+├── workers/          # Web Workers for CPU-intensive tasks
 ├── types/            # TypeScript type definitions
 └── data/             # Presets and default data
 ```
@@ -236,6 +240,64 @@ Located in `src/utils/colour/conversions.ts`. Supports:
 - `hexToHsv` and `hsvToHex` for HSV-based colour pickers
 - Format strings: `formatRgb()`, `formatHsl()`, `formatOklch()`, `formatCmyk()`
 - Validation: `isValidHex()`, `normaliseHex()`, `parseColour()`
+
+## Performance Optimizations
+
+### Zustand Selector Hooks
+To prevent unnecessary re-renders from full-store subscriptions, use selector hooks from `paletteStore.ts`:
+- `useActivePalette()` - returns current active palette
+- `useActivePaletteId()` - returns only the active palette ID
+- `usePalettes()` - returns all palettes
+- `usePaletteActions()` - returns all store actions (stable references)
+
+### React.memo for Expensive Components
+`ColourCard` and `MiniColourCard` are wrapped with `React.memo` and use `useCallback` for event handlers to prevent re-renders when palette changes elsewhere.
+
+### Code Splitting (Lazy Loading)
+Heavy components in `App.tsx` are lazy-loaded with `React.lazy()` and `Suspense`:
+- All accessibility components (ContrastChecker, ContrastMatrix, ColourblindSimulator, AccessibilityReport)
+- All generator components (HarmonyGenerator, ScaleGenerator, GradientGenerator, ImageExtractor)
+- Preview and export components
+
+### CVD Simulation Caching
+`src/utils/colour/colourblind.ts` uses an LRU cache (max 500 entries) for colour vision deficiency simulations:
+- Cache key format: `hex:cvdType`
+- `clearSimulationCache()` - clears the cache
+- `getSimulationCacheSize()` - returns current cache size
+
+### Web Workers
+CPU-intensive tasks run in background threads:
+- `src/workers/colourExtractor.worker.ts` - processes image pixel data for colour extraction
+
+### Vite Bundle Splitting
+`vite.config.ts` uses manual chunks for optimal caching:
+- `vendor-react` - React and React DOM
+- `vendor-framer` - Framer Motion
+- `vendor-zustand` - Zustand
+- `vendor-lucide` - Lucide icons
+
+### Benchmarking Utilities
+`src/utils/performance.ts` provides tools for measuring performance:
+- `measure(name, fn)` - time synchronous operations
+- `measureAsync(name, fn)` - time async operations
+- `benchmark(name, fn, iterations)` - run multiple iterations and get statistics
+- `createProfilerCallback(name)` - for React Profiler integration
+
+In dev mode, access metrics via browser console:
+```js
+window.__PERF__.getMetrics()
+window.__PERF__.getMetricsByName('render:ComponentName')
+window.__PERF__.getMetricStats('render:ComponentName')
+window.__PERF__.exportMetrics()
+```
+
+### DevProfiler Component
+`src/components/dev/DevProfiler.tsx` wraps components for render profiling:
+```tsx
+<DevProfiler id="MyComponent">
+  <MyComponent />
+</DevProfiler>
+```
 
 ## Repository
 GitHub: https://github.com/shoobzy/tynte

@@ -136,7 +136,7 @@ export function GradientCard({ gradient, onUpdate, onDelete }: GradientCardProps
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 bg-black/20 text-white hover:bg-black/40"
+            className="h-7 w-7 bg-black/40 text-white hover:bg-black/60"
             onClick={(e) => {
               e.stopPropagation()
               setIsEditing(true)
@@ -148,7 +148,7 @@ export function GradientCard({ gradient, onUpdate, onDelete }: GradientCardProps
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 bg-black/20 text-white hover:bg-black/40"
+            className="h-7 w-7 bg-black/40 text-white hover:bg-black/60"
             onClick={(e) => {
               e.stopPropagation()
               handleCopy()
@@ -160,7 +160,7 @@ export function GradientCard({ gradient, onUpdate, onDelete }: GradientCardProps
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 bg-black/20 text-white hover:bg-red-500/60"
+            className="h-7 w-7 bg-black/40 text-white hover:bg-red-500/80"
             onClick={(e) => {
               e.stopPropagation()
               onDelete()

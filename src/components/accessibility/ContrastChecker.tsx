@@ -39,8 +39,14 @@ export function ContrastChecker() {
     setLocalBackground(contrastBackground)
   }, [contrastForeground, contrastBackground])
 
-  const handleApply = () => {
-    setContrastColours(localForeground, localBackground)
+  const handleForegroundChange = (hex: string) => {
+    setLocalForeground(hex)
+    setContrastColours(hex, localBackground)
+  }
+
+  const handleBackgroundChange = (hex: string) => {
+    setLocalBackground(hex)
+    setContrastColours(localForeground, hex)
   }
 
   const handleSwap = () => {
@@ -60,41 +66,6 @@ export function ContrastChecker() {
 
   return (
     <div className="space-y-6">
-      {/* Colour pickers */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Foreground (Text)</label>
-          <div className="border border-border rounded-lg p-3 bg-card">
-            <InlineColourPicker
-              value={localForeground}
-              onChange={setLocalForeground}
-              paletteColourGroups={paletteColourGroups}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Background</label>
-          <div className="border border-border rounded-lg p-3 bg-card">
-            <InlineColourPicker
-              value={localBackground}
-              onChange={setLocalBackground}
-              paletteColourGroups={paletteColourGroups}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={handleSwap}>
-          <ArrowLeftRight className="h-4 w-4 mr-2" />
-          Swap Colours
-        </Button>
-        <Button onClick={handleApply}>
-          Apply
-        </Button>
-      </div>
-
       {/* Preview */}
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -141,7 +112,7 @@ export function ContrastChecker() {
         {/* Normal Text */}
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="text-sm text-muted-foreground mb-2">
-            Normal Text (≤18pt)
+            Normal Text (&lt;18pt / 24px)
           </div>
           <div className="space-y-2">
             <ResultBadge
@@ -160,7 +131,7 @@ export function ContrastChecker() {
         {/* Large Text */}
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="text-sm text-muted-foreground mb-2">
-            Large Text (≥18pt or 14pt bold)
+            Large Text (≥18pt / 24px, or 14pt / 19px bold)
           </div>
           <div className="space-y-2">
             <ResultBadge
@@ -199,7 +170,7 @@ export function ContrastChecker() {
               Try using{' '}
               <button
                 className="font-mono font-bold hover:underline"
-                onClick={() => setLocalForeground(suggestedColour)}
+                onClick={() => handleForegroundChange(suggestedColour)}
               >
                 {suggestedColour.toUpperCase()}
               </button>
@@ -213,7 +184,7 @@ export function ContrastChecker() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setLocalForeground(suggestedColour)}
+                onClick={() => handleForegroundChange(suggestedColour)}
               >
                 Apply Suggestion
               </Button>
@@ -221,6 +192,36 @@ export function ContrastChecker() {
           </div>
         </motion.div>
       )}
+
+      {/* Colour pickers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Foreground (Text)</label>
+          <div className="border border-border rounded-lg p-3 bg-card">
+            <InlineColourPicker
+              value={localForeground}
+              onChange={handleForegroundChange}
+              paletteColourGroups={paletteColourGroups}
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Background</label>
+          <div className="border border-border rounded-lg p-3 bg-card">
+            <InlineColourPicker
+              value={localBackground}
+              onChange={handleBackgroundChange}
+              paletteColourGroups={paletteColourGroups}
+            />
+          </div>
+        </div>
+      </div>
+
+      <Button variant="outline" onClick={handleSwap}>
+        <ArrowLeftRight className="h-4 w-4 mr-2" />
+        Swap Colours
+      </Button>
     </div>
   )
 }

@@ -139,7 +139,7 @@ export function Slider({
 
       {/* Outer container with padding to extend clickable area for thumb at edges */}
       <div
-        className={`relative px-2 -mx-2 py-2 -my-2 ${disabled ? 'opacity-50 cursor-not-allowed' : isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
+        className={`relative px-2 -mx-2 py-2 -my-2 ${disabled ? 'opacity-60 cursor-not-allowed' : isDragging ? 'cursor-grabbing' : 'cursor-grab'}`}
         onMouseDown={handleMouseDown}
         onTouchStart={handleTouchStart}
         role="slider"
@@ -282,7 +282,7 @@ export function RangeSlider({
         ref={trackRef}
         className={`
           relative h-2 bg-muted rounded-full
-          ${disabled ? 'opacity-50' : ''}
+          ${disabled ? 'opacity-60' : ''}
         `}
       >
         {/* Selected range */}

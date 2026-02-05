@@ -86,7 +86,7 @@ export function CategoryGroup({
     <div className="border border-border rounded-lg overflow-hidden bg-card">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
+        className="flex items-center justify-between px-4 py-3 bg-muted/50 cursor-pointer"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <div className="flex items-center gap-2">
@@ -100,11 +100,11 @@ export function CategoryGroup({
             {getCategoryLabel(category.category)}
           </span>
           {isCustom && (
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-foreground/70">
               Custom
             </span>
           )}
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-foreground/60">
             ({category.colours.length})
           </span>
         </div>

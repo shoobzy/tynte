@@ -162,7 +162,7 @@ export function Sidebar() {
                                 {palette.name}
                               </span>
                             </div>
-                            <div className="text-xs text-muted-foreground mt-0.5">
+                            <div className={`text-xs mt-0.5 ${isActive ? 'text-foreground/70' : 'text-muted-foreground'}`}>
                               {colourCount} colours · {formatDate(palette.updatedAt)}
                             </div>
                           </div>

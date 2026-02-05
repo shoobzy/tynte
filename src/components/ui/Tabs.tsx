@@ -62,7 +62,7 @@ export function TabsList({ children, className = '', style }: TabsListProps) {
     <div
       className={`
         inline-flex items-center justify-center
-        rounded-lg bg-muted p-1 text-muted-foreground
+        rounded-lg bg-muted p-1 text-foreground/70
         ${className}
       `}
       role="tablist"

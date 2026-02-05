@@ -72,7 +72,7 @@ export function ContrastMatrix() {
           onUpdateColour={handleUpdateColour}
         />
       ) : (
-        <div className="text-center py-8 bg-muted/30 rounded-lg border border-border">
+        <div className="text-center py-8 bg-muted/50 rounded-lg border border-border">
           <AlertTriangle className="h-8 w-8 mx-auto mb-3 text-muted-foreground" />
           <p className="text-muted-foreground">
             Assign at least one <strong>text colour</strong> and one <strong>background colour</strong> above to see contrast analysis.
@@ -141,7 +141,7 @@ function RoleAssignmentSection({ categoriesWithColours, onSetRole }: RoleAssignm
   return (
     <div className="border border-border rounded-lg overflow-hidden">
       <div
-        className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
+        className="flex items-center justify-between px-4 py-3 bg-muted/50 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex items-center gap-2">
@@ -585,7 +585,7 @@ function TextBgPairCard({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
           >
-            <div className="p-3 border-t border-border bg-muted/30 space-y-4">
+            <div className="p-3 border-t border-border bg-muted/50 space-y-4">
               {/* Replace text colour section */}
               <div className="space-y-2">
                 <div className="flex items-center gap-2 text-sm font-medium text-blue-600 dark:text-blue-400">

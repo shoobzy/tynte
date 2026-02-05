@@ -99,7 +99,7 @@ export function TailwindExport() {
       {/* Usage example */}
       <div className="p-4 bg-muted/50 rounded-lg">
         <p className="text-sm font-medium mb-2">Usage Example</p>
-        <pre className="text-xs text-muted-foreground">
+        <pre className="text-xs text-foreground/70">
           {`<div className="bg-primary-500 text-neutral-100">
   Hello World
 </div>`}

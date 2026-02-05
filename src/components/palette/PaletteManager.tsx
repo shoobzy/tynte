@@ -246,7 +246,7 @@ export function PaletteManager() {
           <div className="border border-border rounded-lg overflow-hidden bg-card">
             {/* Header */}
             <div
-              className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
+              className="flex items-center justify-between px-4 py-3 bg-muted/50 cursor-pointer"
               onClick={() => setGradientsExpanded(!gradientsExpanded)}
             >
               <div className="flex items-center gap-2">

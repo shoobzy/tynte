@@ -85,7 +85,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
         {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
         {hint && !error && (
-          <p className="mt-1.5 text-sm text-muted-foreground">{hint}</p>
+          <p className="mt-1.5 text-sm text-foreground/60">{hint}</p>
         )}
       </div>
     )
@@ -128,7 +128,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
         {error && <p className="mt-1.5 text-sm text-destructive">{error}</p>}
         {hint && !error && (
-          <p className="mt-1.5 text-sm text-muted-foreground">{hint}</p>
+          <p className="mt-1.5 text-sm text-foreground/60">{hint}</p>
         )}
       </div>
     )

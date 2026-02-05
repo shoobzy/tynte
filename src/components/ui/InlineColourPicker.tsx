@@ -150,7 +150,7 @@ export function InlineColourPicker({
   }
 
   return (
-    <div className="p-3 bg-muted/30 rounded-lg space-y-3">
+    <div className="p-3 bg-muted/50 rounded-lg space-y-3">
       {/* Canvas picker - outer padding prevents thumb clipping */}
       <div className="p-2">
         <div className="relative">

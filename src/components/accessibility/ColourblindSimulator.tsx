@@ -717,7 +717,7 @@ function TextBackgroundContrastSection({
         <div className={`p-3 rounded-lg border ${
           problemPairs.length === 0
             ? 'border-green-200 dark:border-green-800 bg-green-50 dark:bg-green-900/20'
-            : 'border-border bg-muted/30'
+            : 'border-border bg-muted/50'
         }`}>
           <div className="flex items-center gap-2">
             <Check className={`h-4 w-4 ${

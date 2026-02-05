@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Copy, Trash2, Pencil, Check, X } from 'lucide-react'
 import { Gradient } from '../../types/colour'
@@ -6,6 +6,7 @@ import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { ConfirmModal } from '../ui/ConfirmModal'
 import { useToast } from '../ui/Toast'
+import { useUIStore } from '../../stores/uiStore'
 import { copyToClipboard } from '../../utils/helpers'
 
 interface GradientCardProps {
@@ -37,9 +38,16 @@ export function GradientCard({ gradient, onUpdate, onDelete }: GradientCardProps
   const [editName, setEditName] = useState(gradient.name)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const toast = useToast()
+  const setHasUnsavedEdits = useUIStore((state) => state.setHasUnsavedEdits)
 
   const cssGradient = generateCSSGradient(gradient)
   const hasUnsavedChanges = isEditing && editName !== gradient.name
+
+  // Sync unsaved changes state with the global UI store
+  useEffect(() => {
+    setHasUnsavedEdits(hasUnsavedChanges)
+    return () => setHasUnsavedEdits(false) // Cleanup on unmount
+  }, [hasUnsavedChanges, setHasUnsavedEdits])
 
   const handleCopy = async () => {
     const success = await copyToClipboard(cssGradient)

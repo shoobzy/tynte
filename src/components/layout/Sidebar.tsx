@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { DropdownMenu, DropdownItem, DropdownSeparator } from '../ui/Dropdown'
+import { ConfirmModal } from '../ui/ConfirmModal'
 import { useUIStore } from '../../stores/uiStore'
 import { usePaletteStore } from '../../stores/paletteStore'
 import { formatDate } from '../../utils/helpers'
@@ -28,7 +29,14 @@ const navItems: { id: View; label: string; icon: typeof Palette }[] = [
 ]
 
 export function Sidebar() {
-  const { sidebarOpen, currentView, setCurrentView } = useUIStore()
+  const {
+    sidebarOpen,
+    currentView,
+    requestNavigation,
+    showNavDiscardConfirm,
+    confirmNavigation,
+    cancelNavigation,
+  } = useUIStore()
   const {
     palettes,
     activePaletteId,
@@ -48,6 +56,7 @@ export function Sidebar() {
   })
 
   return (
+    <>
     <AnimatePresence>
       {sidebarOpen && (
         <>
@@ -84,7 +93,7 @@ export function Sidebar() {
                     <Button
                       key={item.id}
                       variant={isActive ? 'secondary' : 'ghost'}
-                      onClick={() => setCurrentView(item.id)}
+                      onClick={() => requestNavigation(item.id)}
                       className="w-full !justify-start"
                     >
                       <Icon className="h-4 w-4 mr-2" />
@@ -228,5 +237,17 @@ export function Sidebar() {
         </>
       )}
     </AnimatePresence>
+
+    {/* Unsaved changes confirmation modal - outside AnimatePresence to always render */}
+    <ConfirmModal
+      isOpen={showNavDiscardConfirm}
+      onClose={cancelNavigation}
+      onConfirm={confirmNavigation}
+      title="Discard unsaved changes?"
+      description="You have unsaved changes that will be lost if you navigate away. Are you sure you want to continue?"
+      confirmLabel="Discard Changes"
+      variant="destructive"
+    />
+    </>
   )
 }

@@ -37,6 +37,7 @@ export function PaletteManager() {
     setPickerColour,
     selectedCategory,
     setSelectedCategory,
+    setHasUnsavedEdits,
   } = useUIStore()
 
   const [isEditingName, setIsEditingName] = useState(false)
@@ -56,6 +57,12 @@ export function PaletteManager() {
   }, [activePalette])
 
   const hasUnsavedNameChanges = isEditingName && activePalette && editedName.trim() !== activePalette.name
+
+  // Sync unsaved name changes state with the global UI store
+  useEffect(() => {
+    setHasUnsavedEdits(!!hasUnsavedNameChanges)
+    return () => setHasUnsavedEdits(false) // Cleanup on unmount
+  }, [hasUnsavedNameChanges, setHasUnsavedEdits])
 
   const handleSaveName = () => {
     if (activePalette && editedName.trim()) {

@@ -19,6 +19,7 @@ import { Input } from '../ui/Input'
 import { InlineColourPicker } from '../ui/InlineColourPicker'
 import { ConfirmModal } from '../ui/ConfirmModal'
 import { useToast } from '../ui/Toast'
+import { useUIStore } from '../../stores/uiStore'
 import { copyToClipboard } from '../../utils/helpers'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
 import { formatRgb, formatHsl } from '../../utils/colour/conversions'
@@ -45,6 +46,7 @@ export function ColourCard({
   const [editHex, setEditHex] = useState(colour.hex)
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const toast = useToast()
+  const setHasUnsavedEdits = useUIStore((state) => state.setHasUnsavedEdits)
 
   // Sync edit state when colour changes externally (e.g., from colourblind suggestions)
   useEffect(() => {
@@ -57,6 +59,12 @@ export function ColourCard({
     editName !== colour.name ||
     editHex.toLowerCase() !== colour.hex.toLowerCase()
   )
+
+  // Sync unsaved changes state with the global UI store
+  useEffect(() => {
+    setHasUnsavedEdits(hasUnsavedChanges)
+    return () => setHasUnsavedEdits(false) // Cleanup on unmount
+  }, [hasUnsavedChanges, setHasUnsavedEdits])
 
   const {
     attributes,

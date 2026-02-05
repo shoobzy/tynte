@@ -36,9 +36,11 @@ export function InlineColourPicker({
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   const baseHsv = hexToHsv(value)
-  // Track hue in state to preserve slider position (hex doesn't preserve hue for s=0 colors)
+  // Track hue and saturation in state to preserve slider positions
+  // (hex doesn't preserve hue when s=0, or saturation when v=0)
   const [hue, setHue] = useState(baseHsv.h)
-  const hsv = { ...baseHsv, h: hue }
+  const [saturation, setSaturation] = useState(baseHsv.s)
+  const hsv = { ...baseHsv, h: hue, s: baseHsv.v > 0 ? baseHsv.s : saturation }
 
   useEffect(() => {
     setHexInput(value)
@@ -46,7 +48,11 @@ export function InlineColourPicker({
     if (baseHsv.s > 0) {
       setHue(baseHsv.h)
     }
-  }, [value, baseHsv.h, baseHsv.s])
+    // Only sync saturation from hex if brightness > 0 (otherwise saturation is meaningless in hex)
+    if (baseHsv.v > 0) {
+      setSaturation(baseHsv.s)
+    }
+  }, [value, baseHsv.h, baseHsv.s, baseHsv.v])
 
   // Draw the colour gradient canvas
   useEffect(() => {
@@ -106,6 +112,7 @@ export function InlineColourPicker({
   }
 
   const handleSaturationChange = (s: number) => {
+    setSaturation(s)
     const newHex = hsvToHex({ ...hsv, s })
     onChange(newHex)
   }

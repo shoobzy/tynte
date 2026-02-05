@@ -24,6 +24,17 @@ interface UIStore {
   currentView: View
   setCurrentView: (view: View) => void
 
+  // Unsaved changes tracking
+  hasUnsavedEdits: boolean
+  setHasUnsavedEdits: (hasEdits: boolean) => void
+  pendingNavigation: View | null
+  setPendingNavigation: (view: View | null) => void
+  showNavDiscardConfirm: boolean
+  setShowNavDiscardConfirm: (show: boolean) => void
+  requestNavigation: (view: View) => void
+  confirmNavigation: () => void
+  cancelNavigation: () => void
+
   // Sidebar
   sidebarOpen: boolean
   toggleSidebar: () => void
@@ -87,10 +98,42 @@ interface UIStore {
   setIsDragging: (dragging: boolean) => void
 }
 
-export const useUIStore = create<UIStore>((set) => ({
+export const useUIStore = create<UIStore>((set, get) => ({
   // View state
   currentView: 'palette',
   setCurrentView: (view) => set({ currentView: view }),
+
+  // Unsaved changes tracking
+  hasUnsavedEdits: false,
+  setHasUnsavedEdits: (hasEdits) => set({ hasUnsavedEdits: hasEdits }),
+  pendingNavigation: null,
+  setPendingNavigation: (view) => set({ pendingNavigation: view }),
+  showNavDiscardConfirm: false,
+  setShowNavDiscardConfirm: (show) => set({ showNavDiscardConfirm: show }),
+  requestNavigation: (view) => {
+    const state = get()
+    if (state.hasUnsavedEdits) {
+      // Show confirmation modal
+      set({ pendingNavigation: view, showNavDiscardConfirm: true })
+    } else {
+      // Navigate immediately
+      set({ currentView: view })
+    }
+  },
+  confirmNavigation: () => {
+    const state = get()
+    if (state.pendingNavigation) {
+      set({
+        currentView: state.pendingNavigation,
+        pendingNavigation: null,
+        showNavDiscardConfirm: false,
+        hasUnsavedEdits: false,
+      })
+    }
+  },
+  cancelNavigation: () => {
+    set({ pendingNavigation: null, showNavDiscardConfirm: false })
+  },
 
   // Sidebar
   sidebarOpen: true,

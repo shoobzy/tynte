@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { ArrowLeftRight, Check, X, Lightbulb, ChevronDown, Palette } from 'lucide-react'
+import { motion } from 'framer-motion'
+import { ArrowLeftRight, Check, X, Lightbulb } from 'lucide-react'
 import { Button } from '../ui/Button'
-import { ColourInput } from '../ui/Input'
+import { InlineColourPicker, PaletteColourGroup } from '../ui/InlineColourPicker'
 import {
   getContrastResult,
   formatContrastRatio,
@@ -24,10 +24,15 @@ export function ContrastChecker() {
 
   const [localForeground, setLocalForeground] = useState(contrastForeground)
   const [localBackground, setLocalBackground] = useState(contrastBackground)
-  const [showPalettePicker, setShowPalettePicker] = useState(true)
 
   const activePalette = palettes.find((p) => p.id === activePaletteId)
   const categoriesWithColours = activePalette?.categories.filter((cat) => cat.colours.length > 0) || []
+
+  // Build palette colour groups for InlineColourPicker
+  const paletteColourGroups: PaletteColourGroup[] = categoriesWithColours.map((cat) => ({
+    category: categoryLabels[cat.category] || cat.category,
+    colours: cat.colours.map((c) => ({ hex: c.hex, name: c.name })),
+  }))
 
   useEffect(() => {
     setLocalForeground(contrastForeground)
@@ -55,127 +60,28 @@ export function ContrastChecker() {
 
   return (
     <div className="space-y-6">
-      {/* Palette colour picker */}
-      {categoriesWithColours.length > 0 && (
-        <div className="border border-border rounded-lg overflow-hidden">
-          <button
-            onClick={() => setShowPalettePicker(!showPalettePicker)}
-            className="w-full flex items-center gap-2 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
-          >
-            <ChevronDown
-              className={`h-4 w-4 text-muted-foreground transition-transform ${
-                showPalettePicker ? '' : '-rotate-90'
-              }`}
-            />
-            <Palette className="h-4 w-4 text-muted-foreground" />
-            <span className="font-medium">Pick from Palette</span>
-            <span className="text-sm text-muted-foreground">
-              ({activePalette?.name})
-            </span>
-          </button>
-
-          <AnimatePresence>
-            {showPalettePicker && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: 'auto', opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                transition={{ duration: 0.2 }}
-                className="overflow-hidden"
-              >
-                <div className="p-3 border-t border-border">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Foreground picker */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-sm bg-blue-500" />
-                        <label className="text-sm font-medium">Select Foreground (Text)</label>
-                      </div>
-                      <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                        {categoriesWithColours.map((category) => (
-                          <div key={`fg-${category.category}`}>
-                            <label className="text-xs text-muted-foreground">
-                              {categoryLabels[category.category] || category.category}
-                            </label>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {category.colours.map((colour) => (
-                                <button
-                                  key={colour.id}
-                                  onClick={() => setLocalForeground(colour.hex)}
-                                  className={`
-                                    w-7 h-7 rounded-md transition-all hover:scale-110
-                                    ${localForeground.toLowerCase() === colour.hex.toLowerCase()
-                                      ? 'ring-2 ring-blue-500 ring-offset-2'
-                                      : 'border border-border'
-                                    }
-                                  `}
-                                  style={{ backgroundColor: colour.hex }}
-                                  title={colour.name}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Background picker */}
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-sm bg-orange-500" />
-                        <label className="text-sm font-medium">Select Background</label>
-                      </div>
-                      <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                        {categoriesWithColours.map((category) => (
-                          <div key={`bg-${category.category}`}>
-                            <label className="text-xs text-muted-foreground">
-                              {categoryLabels[category.category] || category.category}
-                            </label>
-                            <div className="flex flex-wrap gap-1.5 mt-1">
-                              {category.colours.map((colour) => (
-                                <button
-                                  key={colour.id}
-                                  onClick={() => setLocalBackground(colour.hex)}
-                                  className={`
-                                    w-7 h-7 rounded-md transition-all hover:scale-110
-                                    ${localBackground.toLowerCase() === colour.hex.toLowerCase()
-                                      ? 'ring-2 ring-orange-500 ring-offset-2'
-                                      : 'border border-border'
-                                    }
-                                  `}
-                                  style={{ backgroundColor: colour.hex }}
-                                  title={colour.name}
-                                />
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-
-      {/* Colour inputs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Colour pickers */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm font-medium">Foreground (Text)</label>
-          <ColourInput
-            value={localForeground}
-            onChange={setLocalForeground}
-          />
+          <div className="border border-border rounded-lg p-3 bg-card">
+            <InlineColourPicker
+              value={localForeground}
+              onChange={setLocalForeground}
+              paletteColourGroups={paletteColourGroups}
+            />
+          </div>
         </div>
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Background</label>
-          <ColourInput
-            value={localBackground}
-            onChange={setLocalBackground}
-          />
+          <div className="border border-border rounded-lg p-3 bg-card">
+            <InlineColourPicker
+              value={localBackground}
+              onChange={setLocalBackground}
+              paletteColourGroups={paletteColourGroups}
+            />
+          </div>
         </div>
       </div>
 

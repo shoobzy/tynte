@@ -86,6 +86,34 @@ export function AccessibilityReport() {
       }))
     )
 
+    // Enhance colourblind results with reviewed status
+    // We need to look up colour IDs by hex to check reviewed warnings
+    const getColourIdByHex = (hex: string, category: string) => {
+      const cat = categoriesWithColours.find(c => c.category === category)
+      return cat?.colours.find(c => c.hex.toLowerCase() === hex.toLowerCase())?.id
+    }
+
+    const categoryIssuesWithReviewed: Record<ColourblindType, {
+      pairs: { hex1: string; hex2: string; category: string; reviewed: boolean }[]
+      unreviewedCount: number
+      reviewedCount: number
+    }> = {} as any
+
+    for (const [type, result] of Object.entries(colourblindResults.byType)) {
+      const pairsWithReviewed = result.problematicPairs.map(pair => {
+        const id1 = getColourIdByHex(pair.hex1, pair.category)
+        const id2 = getColourIdByHex(pair.hex2, pair.category)
+        const warningKey = id1 && id2 ? `distinguish:${id1}:${id2}:${type}` : null
+        const reviewed = warningKey ? isReviewed(warningKey) : false
+        return { ...pair, reviewed }
+      })
+      categoryIssuesWithReviewed[type as ColourblindType] = {
+        pairs: pairsWithReviewed,
+        unreviewedCount: pairsWithReviewed.filter(p => !p.reviewed).length,
+        reviewedCount: pairsWithReviewed.filter(p => p.reviewed).length,
+      }
+    }
+
     // Simulated contrast analysis - check text/background pairs under CVD simulation
     const simulatedContrastIssues: Record<ColourblindType, {
       pairs: {
@@ -152,6 +180,16 @@ export function AccessibilityReport() {
       ([_, { pairs }]) => pairs.some(p => !p.reviewed)
     ).length
 
+    // Count total category issues
+    const totalCategoryIssues = Object.values(categoryIssuesWithReviewed).reduce(
+      (sum, { unreviewedCount }) => sum + unreviewedCount,
+      0
+    )
+    const totalCategoryReviewed = Object.values(categoryIssuesWithReviewed).reduce(
+      (sum, { reviewedCount }) => sum + reviewedCount,
+      0
+    )
+
     // Calculate scores
     const contrastScore = hasRolesAssigned && roleBasedTotal > 0
       ? Math.round((roleBasedPassing.length / roleBasedTotal) * 100)
@@ -184,6 +222,9 @@ export function AccessibilityReport() {
       roleBasedFailures: roleBasedFailing,
       colourblindResults: colourblindTypeResults,
       colourblindByCategory: colourblindResults.byCategory,
+      categoryIssuesWithReviewed,
+      totalCategoryIssues,
+      totalCategoryReviewed,
       simulatedContrastIssues,
       totalSimulatedIssues,
       totalSimulatedReviewed,
@@ -445,6 +486,22 @@ export function AccessibilityReport() {
             </p>
           )}
 
+          {report.categoriesChecked > 0 && (report.totalCategoryIssues > 0 || report.totalCategoryReviewed > 0) && (
+            <p className="text-sm mt-1">
+              {report.totalCategoryIssues > 0 && (
+                <span className="text-amber-600 dark:text-amber-400">
+                  {report.totalCategoryIssues} category distinguishability issue{report.totalCategoryIssues !== 1 ? 's' : ''}
+                </span>
+              )}
+              {report.totalCategoryIssues > 0 && report.totalCategoryReviewed > 0 && ' · '}
+              {report.totalCategoryReviewed > 0 && (
+                <span className="text-muted-foreground">
+                  {report.totalCategoryReviewed} reviewed
+                </span>
+              )}
+            </p>
+          )}
+
           {report.hasRolesAssigned && (report.totalSimulatedIssues > 0 || report.totalSimulatedReviewed > 0) && (
             <p className="text-sm mt-1">
               {report.totalSimulatedIssues > 0 && (
@@ -469,14 +526,16 @@ export function AccessibilityReport() {
 
           <div className="mt-4 pt-4 border-t border-border space-y-2">
             {colourblindTypes.map((type) => {
-              const categoryResult = report.colourblindResults[type]
+              const categoryResult = report.categoryIssuesWithReviewed[type]
               const simulatedResult = report.simulatedContrastIssues[type]
-              const categoryIssues = categoryResult?.problematicPairs?.length || 0
+              const categoryUnreviewed = categoryResult?.unreviewedCount || 0
+              const categoryReviewed = categoryResult?.reviewedCount || 0
               const simulatedUnreviewed = simulatedResult?.pairs?.filter(p => !p.reviewed).length || 0
               const simulatedReviewed = simulatedResult?.pairs?.filter(p => p.reviewed).length || 0
-              const unreviewedIssues = categoryIssues + simulatedUnreviewed
+              const unreviewedIssues = categoryUnreviewed + simulatedUnreviewed
+              const totalReviewed = categoryReviewed + simulatedReviewed
               const hasUnreviewedIssues = unreviewedIssues > 0
-              const hasReviewedOnly = !hasUnreviewedIssues && simulatedReviewed > 0
+              const hasReviewedOnly = !hasUnreviewedIssues && totalReviewed > 0
 
               return (
                 <div key={type} className="flex items-center justify-between text-sm">
@@ -485,10 +544,10 @@ export function AccessibilityReport() {
                     <span className="flex items-center gap-1 text-red-600 dark:text-red-500">
                       <XCircle className="h-4 w-4" />
                       <span className="flex items-center gap-1.5">
-                        {categoryIssues > 0 && (
-                          <span title="Category issues">{categoryIssues} cat</span>
+                        {categoryUnreviewed > 0 && (
+                          <span title="Category distinguishability issues">{categoryUnreviewed} cat</span>
                         )}
-                        {categoryIssues > 0 && simulatedUnreviewed > 0 && <span>·</span>}
+                        {categoryUnreviewed > 0 && simulatedUnreviewed > 0 && <span>·</span>}
                         {simulatedUnreviewed > 0 && (
                           <span title="Text/background contrast issues" className="flex items-center gap-0.5">
                             {simulatedUnreviewed}
@@ -496,9 +555,9 @@ export function AccessibilityReport() {
                             <Square className="h-3 w-3" />
                           </span>
                         )}
-                        {simulatedReviewed > 0 && (
+                        {totalReviewed > 0 && (
                           <span className="text-muted-foreground ml-1" title="Reviewed issues">
-                            (+{simulatedReviewed})
+                            (+{totalReviewed})
                           </span>
                         )}
                       </span>
@@ -506,7 +565,7 @@ export function AccessibilityReport() {
                   ) : hasReviewedOnly ? (
                     <span className="flex items-center gap-1 text-muted-foreground">
                       <Clock className="h-4 w-4" />
-                      {simulatedReviewed} reviewed
+                      {totalReviewed} reviewed
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-green-600 dark:text-green-500">

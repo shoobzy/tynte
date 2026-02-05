@@ -147,7 +147,10 @@ export function ColourblindSimulator() {
               >
                 {showAll ? 'Show Common' : 'Show All'}
                 {hiddenTypesUnreviewed > 0 && (
-                  <span className="ml-1.5 flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium">
+                  <span
+                    className="ml-1.5 flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium"
+                    title={`${hiddenTypesUnreviewed} unreviewed warning${hiddenTypesUnreviewed !== 1 ? 's' : ''} in hidden types`}
+                  >
                     <AlertTriangle className="h-3 w-3" />
                     {hiddenTypesUnreviewed}
                   </span>
@@ -186,13 +189,19 @@ export function ColourblindSimulator() {
                     </div>
                   </div>
                   {hasUnreviewed && (
-                    <span className="flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium">
+                    <span
+                      className="flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium"
+                      title={`${counts.unreviewed} unreviewed warning${counts.unreviewed !== 1 ? 's' : ''}${counts.total > counts.unreviewed ? `, ${counts.total - counts.unreviewed} reviewed` : ''}`}
+                    >
                       <AlertTriangle className="h-3 w-3" />
                       {counts.unreviewed}
                     </span>
                   )}
                   {allReviewed && (
-                    <span className="flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                    <span
+                      className="flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-medium"
+                      title={`${counts.total} warning${counts.total !== 1 ? 's' : ''}, all reviewed`}
+                    >
                       {counts.total}
                       <CheckCircle className="h-3 w-3" />
                     </span>

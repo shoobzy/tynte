@@ -41,12 +41,15 @@ export function ColourblindSimulator() {
 
   const displayTypes = showAll ? colourblindTypes : commonColourblindTypes
 
-  // Calculate warning counts for each CVD type
+  const reviewedWarnings = activePalette?.reviewedWarnings || []
+
+  // Calculate warning counts for each CVD type (total and unreviewed)
   const warningsByType = useMemo(() => {
-    const warnings: Record<ColourblindType, number> = {} as Record<ColourblindType, number>
+    const warnings: Record<ColourblindType, { total: number; unreviewed: number }> = {} as Record<ColourblindType, { total: number; unreviewed: number }>
 
     for (const type of colourblindTypes) {
-      let warningCount = 0
+      let totalCount = 0
+      let unreviewedCount = 0
 
       // Check text/background contrast issues
       if (hasRolesAssigned) {
@@ -68,7 +71,11 @@ export function ColourblindSimulator() {
             const failsUnderSimulation = passesOriginal && !passesSimulated
 
             if (failsUnderSimulation || degraded) {
-              warningCount++
+              totalCount++
+              const warningKey = `contrast:${text.id}:${bg.id}:${type}`
+              if (!reviewedWarnings.includes(warningKey)) {
+                unreviewedCount++
+              }
             }
           }
         }
@@ -78,19 +85,33 @@ export function ColourblindSimulator() {
       if (categoriesWithColours.length > 0) {
         const categoryData = categoriesWithColours.map((cat) => ({
           category: cat.category,
-          colours: cat.colours.map((c) => ({ hex: c.hex, name: c.name })),
+          colours: cat.colours.map((c) => ({ hex: c.hex, name: c.name, id: c.id })),
         }))
         const accessibility = checkCategoryAccessibility(categoryData)
         if (accessibility && accessibility.byType[type] && !accessibility.byType[type].accessible) {
-          warningCount += accessibility.byType[type].problematicPairs.length
+          for (const pair of accessibility.byType[type].problematicPairs) {
+            totalCount++
+            // Find colour IDs for this pair
+            const allColours = categoriesWithColours.flatMap((cat) => cat.colours)
+            const c1 = allColours.find((c) => c.hex === pair.hex1)
+            const c2 = allColours.find((c) => c.hex === pair.hex2)
+            if (c1 && c2) {
+              const warningKey = `distinguish:${c1.id}:${c2.id}:${type}`
+              if (!reviewedWarnings.includes(warningKey)) {
+                unreviewedCount++
+              }
+            } else {
+              unreviewedCount++ // Can't check, assume unreviewed
+            }
+          }
         }
       }
 
-      warnings[type] = warningCount
+      warnings[type] = { total: totalCount, unreviewed: unreviewedCount }
     }
 
     return warnings
-  }, [textColours, backgroundColours, hasRolesAssigned, categoriesWithColours])
+  }, [textColours, backgroundColours, hasRolesAssigned, categoriesWithColours, reviewedWarnings])
 
   if (colours.length === 0) {
     return (
@@ -111,10 +132,10 @@ export function ColourblindSimulator() {
           </label>
           {(() => {
             // Calculate warnings in non-common types (only visible in "Show All")
-            const hiddenTypesWithWarnings = !showAll
+            const hiddenTypesUnreviewed = !showAll
               ? colourblindTypes
                   .filter((type) => !commonColourblindTypes.includes(type))
-                  .reduce((sum, type) => sum + (warningsByType[type] || 0), 0)
+                  .reduce((sum, type) => sum + (warningsByType[type]?.unreviewed || 0), 0)
               : 0
 
             return (
@@ -122,13 +143,13 @@ export function ColourblindSimulator() {
                 variant="ghost"
                 size="sm"
                 onClick={() => setShowAll(!showAll)}
-                className={hiddenTypesWithWarnings > 0 ? 'text-amber-600 dark:text-amber-400' : ''}
+                className={hiddenTypesUnreviewed > 0 ? 'text-amber-600 dark:text-amber-400' : ''}
               >
                 {showAll ? 'Show Common' : 'Show All'}
-                {hiddenTypesWithWarnings > 0 && (
+                {hiddenTypesUnreviewed > 0 && (
                   <span className="ml-1.5 flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium">
                     <AlertTriangle className="h-3 w-3" />
-                    {hiddenTypesWithWarnings}
+                    {hiddenTypesUnreviewed}
                   </span>
                 )}
               </Button>
@@ -138,7 +159,9 @@ export function ColourblindSimulator() {
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
           {displayTypes.map((type) => {
-            const warningCount = warningsByType[type] || 0
+            const counts = warningsByType[type] || { total: 0, unreviewed: 0 }
+            const hasUnreviewed = counts.unreviewed > 0
+            const allReviewed = counts.total > 0 && counts.unreviewed === 0
             return (
               <button
                 key={type}
@@ -147,7 +170,7 @@ export function ColourblindSimulator() {
                   p-3 rounded-lg border text-left transition-all relative
                   ${colourblindType === type
                     ? 'border-primary bg-primary/5'
-                    : warningCount > 0
+                    : hasUnreviewed
                       ? 'border-amber-300 dark:border-amber-700 hover:border-amber-400 dark:hover:border-amber-600'
                       : 'border-border hover:border-primary/50'
                   }
@@ -162,10 +185,16 @@ export function ColourblindSimulator() {
                       {getColourblindTypeName(type).split('(')[1]?.replace(')', '')}
                     </div>
                   </div>
-                  {warningCount > 0 && (
+                  {hasUnreviewed && (
                     <span className="flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-xs font-medium">
                       <AlertTriangle className="h-3 w-3" />
-                      {warningCount}
+                      {counts.unreviewed}
+                    </span>
+                  )}
+                  {allReviewed && (
+                    <span className="flex items-center justify-center gap-1 px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground text-xs font-medium">
+                      {counts.total}
+                      <CheckCircle className="h-3 w-3" />
                     </span>
                   )}
                 </div>

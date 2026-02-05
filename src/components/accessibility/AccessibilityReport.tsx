@@ -12,6 +12,7 @@ import {
   ArrowRight,
   Type,
   Square,
+  Clock,
 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { usePaletteStore } from '../../stores/paletteStore'
@@ -36,11 +37,15 @@ export function AccessibilityReport() {
   const activePalette = palettes.find((p) => p.id === activePaletteId)
   const allColours = activePalette?.categories.flatMap((cat) => cat.colours) || []
   const categoriesWithColours = activePalette?.categories.filter((cat) => cat.colours.length >= 2) || []
+  const reviewedWarnings = activePalette?.reviewedWarnings || []
 
   // Separate colours by role
   const textColours = allColours.filter((c) => c.role === 'text' || c.role === 'both')
   const backgroundColours = allColours.filter((c) => c.role === 'background' || c.role === 'both')
   const hasRolesAssigned = textColours.length > 0 && backgroundColours.length > 0
+
+  // Helper to check if a warning is reviewed
+  const isReviewed = (warningKey: string) => reviewedWarnings.includes(warningKey)
 
   const report = useMemo(() => {
     if (allColours.length < 2) return null
@@ -90,6 +95,7 @@ export function AccessibilityReport() {
         simulatedRatio: number
         failsUnderSimulation: boolean
         degraded: boolean
+        reviewed: boolean
       }[]
     }> = {} as Record<ColourblindType, { pairs: typeof simulatedContrastIssues[ColourblindType]['pairs'] }>
 
@@ -115,6 +121,7 @@ export function AccessibilityReport() {
             const failsUnderSimulation = passesOriginal && !passesSimulated
 
             if (failsUnderSimulation || degraded) {
+              const warningKey = `contrast:${text.id}:${bg.id}:${type}`
               problemPairs.push({
                 text,
                 background: bg,
@@ -122,6 +129,7 @@ export function AccessibilityReport() {
                 simulatedRatio,
                 failsUnderSimulation,
                 degraded,
+                reviewed: isReviewed(warningKey),
               })
             }
           }
@@ -131,13 +139,17 @@ export function AccessibilityReport() {
       }
     }
 
-    // Count total simulated contrast issues
+    // Count total simulated contrast issues (unreviewed only for scoring)
     const totalSimulatedIssues = Object.values(simulatedContrastIssues).reduce(
-      (sum, { pairs }) => sum + pairs.length,
+      (sum, { pairs }) => sum + pairs.filter(p => !p.reviewed).length,
+      0
+    )
+    const totalSimulatedReviewed = Object.values(simulatedContrastIssues).reduce(
+      (sum, { pairs }) => sum + pairs.filter(p => p.reviewed).length,
       0
     )
     const typesWithSimulatedIssues = Object.entries(simulatedContrastIssues).filter(
-      ([_, { pairs }]) => pairs.length > 0
+      ([_, { pairs }]) => pairs.some(p => !p.reviewed)
     ).length
 
     // Calculate scores
@@ -174,6 +186,7 @@ export function AccessibilityReport() {
       colourblindByCategory: colourblindResults.byCategory,
       simulatedContrastIssues,
       totalSimulatedIssues,
+      totalSimulatedReviewed,
       contrastScore,
       colourblindScore,
       overallScore,
@@ -432,9 +445,19 @@ export function AccessibilityReport() {
             </p>
           )}
 
-          {report.hasRolesAssigned && report.totalSimulatedIssues > 0 && (
-            <p className="text-sm text-amber-600 dark:text-amber-400 mt-1">
-              {report.totalSimulatedIssues} text/background contrast issue{report.totalSimulatedIssues !== 1 ? 's' : ''} under simulation
+          {report.hasRolesAssigned && (report.totalSimulatedIssues > 0 || report.totalSimulatedReviewed > 0) && (
+            <p className="text-sm mt-1">
+              {report.totalSimulatedIssues > 0 && (
+                <span className="text-amber-600 dark:text-amber-400">
+                  {report.totalSimulatedIssues} text/background contrast issue{report.totalSimulatedIssues !== 1 ? 's' : ''} under simulation
+                </span>
+              )}
+              {report.totalSimulatedIssues > 0 && report.totalSimulatedReviewed > 0 && ' · '}
+              {report.totalSimulatedReviewed > 0 && (
+                <span className="text-muted-foreground">
+                  {report.totalSimulatedReviewed} reviewed
+                </span>
+              )}
             </p>
           )}
 
@@ -449,29 +472,41 @@ export function AccessibilityReport() {
               const categoryResult = report.colourblindResults[type]
               const simulatedResult = report.simulatedContrastIssues[type]
               const categoryIssues = categoryResult?.problematicPairs?.length || 0
-              const simulatedIssues = simulatedResult?.pairs?.length || 0
-              const totalIssues = categoryIssues + simulatedIssues
-              const hasIssues = totalIssues > 0
+              const simulatedUnreviewed = simulatedResult?.pairs?.filter(p => !p.reviewed).length || 0
+              const simulatedReviewed = simulatedResult?.pairs?.filter(p => p.reviewed).length || 0
+              const unreviewedIssues = categoryIssues + simulatedUnreviewed
+              const hasUnreviewedIssues = unreviewedIssues > 0
+              const hasReviewedOnly = !hasUnreviewedIssues && simulatedReviewed > 0
 
               return (
                 <div key={type} className="flex items-center justify-between text-sm">
                   <span>{getColourblindTypeName(type as ColourblindType).split(' ')[0]}</span>
-                  {hasIssues ? (
+                  {hasUnreviewedIssues ? (
                     <span className="flex items-center gap-1 text-red-600 dark:text-red-500">
                       <XCircle className="h-4 w-4" />
                       <span className="flex items-center gap-1.5">
                         {categoryIssues > 0 && (
                           <span title="Category issues">{categoryIssues} cat</span>
                         )}
-                        {categoryIssues > 0 && simulatedIssues > 0 && <span>·</span>}
-                        {simulatedIssues > 0 && (
+                        {categoryIssues > 0 && simulatedUnreviewed > 0 && <span>·</span>}
+                        {simulatedUnreviewed > 0 && (
                           <span title="Text/background contrast issues" className="flex items-center gap-0.5">
-                            {simulatedIssues}
+                            {simulatedUnreviewed}
                             <Type className="h-3 w-3" />
                             <Square className="h-3 w-3" />
                           </span>
                         )}
+                        {simulatedReviewed > 0 && (
+                          <span className="text-muted-foreground ml-1" title="Reviewed issues">
+                            (+{simulatedReviewed})
+                          </span>
+                        )}
                       </span>
+                    </span>
+                  ) : hasReviewedOnly ? (
+                    <span className="flex items-center gap-1 text-muted-foreground">
+                      <Clock className="h-4 w-4" />
+                      {simulatedReviewed} reviewed
                     </span>
                   ) : (
                     <span className="flex items-center gap-1 text-green-600 dark:text-green-500">
@@ -548,7 +583,7 @@ export function AccessibilityReport() {
       )}
 
       {/* Simulated contrast issues breakdown */}
-      {report.hasRolesAssigned && report.totalSimulatedIssues > 0 && (
+      {report.hasRolesAssigned && (report.totalSimulatedIssues > 0 || report.totalSimulatedReviewed > 0) && (
         <div className="bg-card border border-border rounded-lg p-4">
           <h4 className="font-medium mb-3 flex items-center gap-2">
             <div className="flex items-center gap-1 text-muted-foreground">
@@ -563,8 +598,11 @@ export function AccessibilityReport() {
           </p>
           <div className="space-y-3">
             {Object.entries(report.simulatedContrastIssues)
-              .filter(([_, { pairs }]) => pairs.length > 0)
-              .map(([type, { pairs }]) => (
+              .filter(([_, { pairs }]) => pairs.some(p => !p.reviewed))
+              .map(([type, { pairs }]) => {
+                const unreviewedPairs = pairs.filter(p => !p.reviewed)
+                const reviewedCount = pairs.filter(p => p.reviewed).length
+                return (
                 <div
                   key={type}
                   className="p-3 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/10"
@@ -573,13 +611,21 @@ export function AccessibilityReport() {
                     <span className="font-medium">
                       {getColourblindTypeName(type as ColourblindType).split(' ')[0]}
                     </span>
-                    <span className="text-sm text-amber-600 dark:text-amber-400 flex items-center gap-1">
-                      <AlertTriangle className="h-4 w-4" />
-                      {pairs.length} issue{pairs.length !== 1 ? 's' : ''}
+                    <span className="text-sm flex items-center gap-2">
+                      <span className="text-amber-600 dark:text-amber-400 flex items-center gap-1">
+                        <AlertTriangle className="h-4 w-4" />
+                        {unreviewedPairs.length} issue{unreviewedPairs.length !== 1 ? 's' : ''}
+                      </span>
+                      {reviewedCount > 0 && (
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Clock className="h-3.5 w-3.5" />
+                          {reviewedCount} reviewed
+                        </span>
+                      )}
                     </span>
                   </div>
                   <div className="space-y-2">
-                    {pairs.slice(0, 3).map((pair, i) => (
+                    {unreviewedPairs.slice(0, 3).map((pair, i) => (
                       <div key={i} className="flex items-center gap-3 text-sm">
                         <div
                           className="w-14 h-6 rounded text-xs font-medium flex items-center justify-center"
@@ -606,11 +652,30 @@ export function AccessibilityReport() {
                         )}
                       </div>
                     ))}
-                    {pairs.length > 3 && (
+                    {unreviewedPairs.length > 3 && (
                       <p className="text-xs text-muted-foreground">
-                        +{pairs.length - 3} more pairs
+                        +{unreviewedPairs.length - 3} more pairs
                       </p>
                     )}
+                  </div>
+                </div>
+              )})}
+            {/* Reviewed-only types */}
+            {Object.entries(report.simulatedContrastIssues)
+              .filter(([_, { pairs }]) => pairs.length > 0 && pairs.every(p => p.reviewed))
+              .map(([type, { pairs }]) => (
+                <div
+                  key={type}
+                  className="p-3 rounded-lg border border-border bg-muted/30"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-muted-foreground">
+                      {getColourblindTypeName(type as ColourblindType).split(' ')[0]}
+                    </span>
+                    <span className="text-sm text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-4 w-4" />
+                      {pairs.length} reviewed
+                    </span>
                   </div>
                 </div>
               ))}

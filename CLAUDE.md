@@ -199,7 +199,7 @@ Components with edit modes (ColourCard, GradientCard, PaletteManager) register t
 Use `useToast()` hook for notifications: `toast.success()`, `toast.error()`, `toast.warning()`
 
 ### Ring Clipping Prevention
-When colour swatches have selection rings (`ring-2 ring-offset-2`), the ring-offset extends outside the container bounds and gets clipped. Fix with padding pattern: `p-1 -m-1` on the container (or `px-1 -mx-1` / `py-1 -my-1` for specific axes). The negative margin compensates for the padding so layout isn't affected. Applied in: InlineColourPicker, ContrastMatrix, ColourPicker, ComponentPreview.
+When colour swatches have selection rings (`ring-2 ring-offset-2`), the ring-offset extends outside the container bounds and gets clipped. Fix with padding pattern: `p-1 -m-1` on the container (or `px-1 -mx-1` / `py-1 -my-1` for specific axes). The negative margin compensates for the padding so layout isn't affected. Applied in: InlineColourPicker palette swatches, ContrastMatrix, ColourPicker, ComponentPreview. Note: InlineColourPicker canvas relies on the outer `p-3` container padding for thumb overflow - no extra wrapper needed.
 
 ### Locked Colours Pattern
 Colours have an optional `locked` property. When true:
@@ -216,7 +216,7 @@ Accessibility warnings in ColourblindSimulator can be marked as "reviewed" to ac
 - Persists with palette in localStorage
 
 ### Slider Component
-When using framer-motion `whileHover`/`whileTap` with positioned elements, separate the positioning (outer div with translate) from the animation (inner motion.div with scale) to prevent transform conflicts. Sliders use `cursor-grab`/`cursor-grabbing` for drag feedback.
+When using framer-motion `whileHover`/`whileTap` with positioned elements, separate the positioning (outer div with translate) from the animation (inner motion.div with scale) to prevent transform conflicts. Sliders use `cursor-grab`/`cursor-grabbing` for drag feedback. The slider uses `p-1 -m-1` on an outer wrapper to extend the clickable hit area by 4px on all sides without affecting layout - this makes it easier to grab the thumb at extreme positions.
 
 ### Colour Conversion Utilities
 Located in `src/utils/colour/conversions.ts`. Supports:

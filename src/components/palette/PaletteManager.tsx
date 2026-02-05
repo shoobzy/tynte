@@ -323,12 +323,15 @@ export function PaletteManager() {
         size="lg"
       >
         <div className="space-y-4">
-          <Dropdown
-            options={categoryOptions}
-            value={selectedCategory}
-            onChange={(value) => setSelectedCategory(value as ColourCategory)}
-            className="w-full"
-          />
+          <div>
+            <label className="block text-sm font-medium mb-2">Group</label>
+            <Dropdown
+              options={categoryOptions}
+              value={selectedCategory}
+              onChange={(value) => setSelectedCategory(value as ColourCategory)}
+              className="w-full"
+            />
+          </div>
 
           <ColourPicker
             value={pickerColour}

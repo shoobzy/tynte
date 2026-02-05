@@ -200,8 +200,8 @@ export function ComponentPreview() {
               className={`
                 px-3 py-1.5 text-xs rounded-md border transition-all
                 ${baseShadeIndex === null
-                  ? 'border-primary bg-primary/10 text-primary'
-                  : 'border-border hover:border-muted-foreground'
+                  ? 'border-primary bg-primary/10 text-primary dark:text-violet-400'
+                  : 'border-border text-foreground hover:border-muted-foreground'
                 }
               `}
             >

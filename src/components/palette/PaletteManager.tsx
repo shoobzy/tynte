@@ -1,6 +1,22 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Pencil, Check, X, Shuffle, Palette as PaletteIcon, FolderPlus, ChevronDown, Trash2 } from 'lucide-react'
+import {
+  Plus,
+  Pencil,
+  Check,
+  X,
+  Shuffle,
+  Palette as PaletteIcon,
+  FolderPlus,
+  ChevronDown,
+  Trash2,
+  Layers,
+  Eye,
+  Sparkles,
+  Image,
+  Download,
+  ScanEye,
+} from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
 import { Modal } from '../ui/Modal'
@@ -14,6 +30,49 @@ import { generateCompleteRandomPalette } from '../../utils/colour/harmony'
 import { ColourCategory } from '../../types/palette'
 import { Dropdown } from '../ui/Dropdown'
 import { getCategoryLabel, defaultCategories } from '../../data/presets'
+
+const features = [
+  {
+    icon: Layers,
+    title: 'Palette Organisation',
+    description: 'Organise colours by category with custom groups and drag-and-drop reordering.',
+    view: 'palette' as const,
+  },
+  {
+    icon: ScanEye,
+    title: 'Contrast Checker',
+    description: 'Test colour combinations against WCAG AA and AAA accessibility standards.',
+    view: 'accessibility' as const,
+    tab: 'contrast',
+  },
+  {
+    icon: Eye,
+    title: 'Colourblind Simulation',
+    description: 'Preview how your palette appears to users with 7 types of colour vision deficiency.',
+    view: 'accessibility' as const,
+    tab: 'colourblind',
+  },
+  {
+    icon: Sparkles,
+    title: 'Harmony Generator',
+    description: 'Generate complementary, triadic, tetradic, and other colour harmonies.',
+    view: 'generators' as const,
+    tab: 'harmony',
+  },
+  {
+    icon: Image,
+    title: 'Image Extraction',
+    description: 'Extract dominant colours from any image to build your palette.',
+    view: 'generators' as const,
+    tab: 'extract',
+  },
+  {
+    icon: Download,
+    title: 'Multi-format Export',
+    description: 'Export to CSS custom properties, Tailwind config, or Figma design tokens.',
+    view: 'export' as const,
+  },
+]
 
 export function PaletteManager() {
   const {
@@ -31,6 +90,7 @@ export function PaletteManager() {
 
   const {
     currentView,
+    setCurrentView,
     pickerOpen,
     setPickerOpen,
     pickerColour,
@@ -38,6 +98,8 @@ export function PaletteManager() {
     selectedCategory,
     setSelectedCategory,
     setHasUnsavedEdits,
+    setAccessibilityTab,
+    setGeneratorTab,
   } = useUIStore()
 
   const [isEditingName, setIsEditingName] = useState(false)
@@ -117,36 +179,27 @@ export function PaletteManager() {
     return null
   }
 
-  // No active palette - show create prompt
-  if (!activePalette) {
-    return (
-      <div className="flex flex-col items-center justify-center py-16 text-center">
-        <PaletteIcon className="h-16 w-16 text-muted-foreground/50 mb-4" />
-        <h2 className="text-2xl font-semibold mb-2">Welcome to Tynte</h2>
-        <p className="text-muted-foreground mb-6 max-w-md">
-          Create your first colour palette to start building your design system
-        </p>
-        <div className="flex gap-3">
-          <Button onClick={() => createPalette('My First Palette')}>
-            <Plus className="h-4 w-4 mr-2" />
-            Create Palette
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => {
-              const id = createPalette('Random Palette')
-              const palette = generateCompleteRandomPalette()
-              Object.entries(palette).forEach(([category, colours]) => {
-                addColoursToCategory(id, colours, category as ColourCategory)
-              })
-            }}
-          >
-            <Shuffle className="h-4 w-4 mr-2" />
-            Generate Random
-          </Button>
-        </div>
-      </div>
-    )
+  const handleFeatureClick = (feature: typeof features[number]) => {
+    // Create a palette first if needed
+    if (!activePalette) {
+      const paletteId = createPalette('My Palette')
+      const palette = generateCompleteRandomPalette()
+      Object.entries(palette).forEach(([category, colours]) => {
+        addColoursToCategory(paletteId, colours, category as ColourCategory)
+      })
+    }
+
+    // Navigate to the feature (skip if it's the palette view since we're already there)
+    if (feature.view !== 'palette') {
+      setCurrentView(feature.view)
+      if (feature.tab) {
+        if (feature.view === 'accessibility') {
+          setAccessibilityTab(feature.tab as 'contrast' | 'matrix' | 'colourblind' | 'report')
+        } else if (feature.view === 'generators') {
+          setGeneratorTab(feature.tab as 'harmony' | 'scale' | 'gradient' | 'extract')
+        }
+      }
+    }
   }
 
   // Get all categories (default + custom from the palette)
@@ -158,6 +211,75 @@ export function PaletteManager() {
     value: cat,
     label: getCategoryLabel(cat),
   }))
+
+  // No active palette - show welcome state
+  if (!activePalette) {
+    return (
+      <div className="space-y-12">
+        {/* Hero Section */}
+        <div className="flex flex-col items-center justify-center py-8 text-center">
+          <PaletteIcon className="h-14 w-14 text-primary mb-4" />
+          <h2 className="text-3xl font-bold mb-3">Welcome to Tynte</h2>
+          <p className="text-lg text-muted-foreground mb-6 max-w-lg">
+            A professional colour palette generator for designers and developers.
+            Build accessible, beautiful colour systems.
+          </p>
+          <div className="flex gap-3">
+            <Button size="lg" onClick={() => createPalette('My First Palette')}>
+              <Plus className="h-4 w-4 mr-2" />
+              Create Palette
+            </Button>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => {
+                const id = createPalette('Random Palette')
+                const palette = generateCompleteRandomPalette()
+                Object.entries(palette).forEach(([category, colours]) => {
+                  addColoursToCategory(id, colours, category as ColourCategory)
+                })
+              }}
+            >
+              <Shuffle className="h-4 w-4 mr-2" />
+              Generate Random
+            </Button>
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <div>
+          <div className="text-center mb-6">
+            <h3 className="text-xl font-semibold mb-2">What you can do</h3>
+            <p className="text-muted-foreground">
+              Everything you need to create and validate your colour palette
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((feature) => (
+              <button
+                key={feature.title}
+                className="group p-5 rounded-lg border border-border bg-card text-left transition-colors hover:border-primary/50 hover:bg-muted/50"
+                onClick={() => handleFeatureClick(feature)}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="p-2 rounded-md bg-primary/10 text-primary dark:text-violet-400 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
+                    <feature.icon className="h-5 w-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h4 className="font-medium mb-1">{feature.title}</h4>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {feature.description}
+                    </p>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">

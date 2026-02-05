@@ -1,5 +1,6 @@
 export { MarketingNav } from './MarketingNav'
 export { HeroSection } from './HeroSection'
+export { FeatureHighlights } from './FeatureHighlights'
 export { FeatureSection } from './FeatureSection'
 export { CTASection } from './CTASection'
 export { Footer } from './Footer'

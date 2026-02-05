@@ -3,6 +3,7 @@ import { usePreferencesStore } from '../stores/preferencesStore'
 import {
   MarketingNav,
   HeroSection,
+  FeatureHighlights,
   FeatureSection,
   CTASection,
   Footer,
@@ -25,6 +26,8 @@ export function HomePage() {
 
       <main>
         <HeroSection />
+
+        <FeatureHighlights />
 
         <div id="features" className="scroll-mt-20">
           {/* Feature 1: Accessibility First */}

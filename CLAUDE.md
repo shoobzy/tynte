@@ -24,7 +24,7 @@ src/
 │   ├── preview/      # ComponentPreview
 │   ├── marketing/    # Landing page components (HeroSection, FeatureHighlights, etc.)
 │   └── dev/          # DevProfiler and development utilities
-├── pages/            # Page components (HomePage)
+├── pages/            # Page components (HomePage, NotFoundPage)
 ├── stores/           # Zustand stores (paletteStore, uiStore, preferencesStore)
 ├── utils/
 │   ├── colour/       # Colour conversion, contrast, harmony utilities
@@ -38,6 +38,7 @@ src/
 ## Routing
 - `/` - Marketing homepage (`src/pages/HomePage.tsx`)
 - `/app` - Main application (`src/App.tsx`)
+- `*` - 404 page (`src/pages/NotFoundPage.tsx`) - catches all unmatched routes
 
 ## Conventions
 

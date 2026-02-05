@@ -24,7 +24,7 @@ export function ContrastChecker() {
 
   const [localForeground, setLocalForeground] = useState(contrastForeground)
   const [localBackground, setLocalBackground] = useState(contrastBackground)
-  const [showPalettePicker, setShowPalettePicker] = useState(false)
+  const [showPalettePicker, setShowPalettePicker] = useState(true)
 
   const activePalette = palettes.find((p) => p.id === activePaletteId)
   const categoriesWithColours = activePalette?.categories.filter((cat) => cat.colours.length > 0) || []
@@ -60,20 +60,18 @@ export function ContrastChecker() {
         <div className="border border-border rounded-lg overflow-hidden">
           <button
             onClick={() => setShowPalettePicker(!showPalettePicker)}
-            className="w-full flex items-center justify-between p-3 bg-card hover:bg-muted/50 transition-colors"
+            className="w-full flex items-center gap-2 px-4 py-3 bg-muted/30 hover:bg-muted/50 transition-colors"
           >
-            <div className="flex items-center gap-2">
-              <Palette className="h-4 w-4 text-muted-foreground" />
-              <span className="font-medium">Pick from Palette</span>
-              <span className="text-sm text-muted-foreground">
-                ({activePalette?.name})
-              </span>
-            </div>
             <ChevronDown
               className={`h-4 w-4 text-muted-foreground transition-transform ${
-                showPalettePicker ? 'rotate-180' : ''
+                showPalettePicker ? '' : '-rotate-90'
               }`}
             />
+            <Palette className="h-4 w-4 text-muted-foreground" />
+            <span className="font-medium">Pick from Palette</span>
+            <span className="text-sm text-muted-foreground">
+              ({activePalette?.name})
+            </span>
           </button>
 
           <AnimatePresence>
@@ -93,7 +91,7 @@ export function ContrastChecker() {
                         <div className="w-3 h-3 rounded-sm bg-blue-500" />
                         <label className="text-sm font-medium">Select Foreground (Text)</label>
                       </div>
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                      <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
                         {categoriesWithColours.map((category) => (
                           <div key={`fg-${category.category}`}>
                             <label className="text-xs text-muted-foreground">
@@ -127,7 +125,7 @@ export function ContrastChecker() {
                         <div className="w-3 h-3 rounded-sm bg-orange-500" />
                         <label className="text-sm font-medium">Select Background</label>
                       </div>
-                      <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+                      <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
                         {categoriesWithColours.map((category) => (
                           <div key={`bg-${category.category}`}>
                             <label className="text-xs text-muted-foreground">

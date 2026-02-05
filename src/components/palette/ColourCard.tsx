@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -11,10 +11,12 @@ import {
   Pencil,
   Check,
   X,
+  Undo2,
 } from 'lucide-react'
 import { Colour } from '../../types/colour'
 import { Button } from '../ui/Button'
 import { Input } from '../ui/Input'
+import { InlineColourPicker } from '../ui/InlineColourPicker'
 import { useToast } from '../ui/Toast'
 import { copyToClipboard } from '../../utils/helpers'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
@@ -25,6 +27,7 @@ interface ColourCardProps {
   onUpdate: (updates: Partial<Omit<Colour, 'id' | 'createdAt'>>) => void
   onDelete: () => void
   onToggleLock: () => void
+  onRevert?: () => void
   showDetails?: boolean
 }
 
@@ -33,12 +36,19 @@ export function ColourCard({
   onUpdate,
   onDelete,
   onToggleLock,
+  onRevert,
   showDetails = true,
 }: ColourCardProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(colour.name)
   const [editHex, setEditHex] = useState(colour.hex)
   const toast = useToast()
+
+  // Sync edit state when colour changes externally (e.g., from colourblind suggestions)
+  useEffect(() => {
+    setEditName(colour.name)
+    setEditHex(colour.hex)
+  }, [colour.name, colour.hex])
 
   const {
     attributes,
@@ -91,27 +101,18 @@ export function ColourCard({
         layout
         className="bg-card border border-border rounded-lg p-3 space-y-3"
       >
-        <div className="flex gap-2">
-          <div
-            className="w-12 h-12 rounded-md border border-border flex-shrink-0"
-            style={{ backgroundColor: editHex }}
-          />
-          <div className="flex-1 space-y-2">
-            <Input
-              value={editName}
-              onChange={(e) => setEditName(e.target.value)}
-              placeholder="Colour name"
-              className="h-8 text-sm"
-            />
-            <Input
-              value={editHex}
-              onChange={(e) => setEditHex(e.target.value)}
-              placeholder="#000000"
-              className="h-8 text-sm font-mono"
-              maxLength={7}
-            />
-          </div>
-        </div>
+        <Input
+          value={editName}
+          onChange={(e) => setEditName(e.target.value)}
+          placeholder="Colour name"
+          className="h-8 text-sm"
+        />
+        <InlineColourPicker
+          value={editHex}
+          onChange={setEditHex}
+          onError={(msg) => toast.error(msg)}
+          onSuccess={(msg) => toast.success(msg)}
+        />
         <div className="flex gap-2 justify-end">
           <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
             <X className="h-4 w-4 mr-1" />
@@ -210,6 +211,21 @@ export function ColourCard({
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
+          {colour.previousHex && onRevert && (
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7"
+              style={{ backgroundColor: `${textColour}20`, color: textColour }}
+              onClick={(e) => {
+                e.stopPropagation()
+                onRevert()
+              }}
+              title={`Revert to ${colour.previousHex.toUpperCase()}`}
+            >
+              <Undo2 className="h-3.5 w-3.5" />
+            </Button>
+          )}
           <Button
             variant="ghost"
             size="icon"

@@ -3,7 +3,7 @@ import { Pipette } from 'lucide-react'
 import { Button } from './Button'
 import { Input } from './Input'
 import { Slider } from './Slider'
-import { hexToHsl, hslToHex, isValidHex, normaliseHex } from '../../utils/colour/conversions'
+import { hexToHsv, hsvToHex, isValidHex, normaliseHex } from '../../utils/colour/conversions'
 import { supportsEyeDropper } from '../../utils/helpers'
 
 interface InlineColourPickerProps {
@@ -26,18 +26,18 @@ export function InlineColourPicker({
   const [hexInput, setHexInput] = useState(value)
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
-  const baseHsl = hexToHsl(value)
+  const baseHsv = hexToHsv(value)
   // Track hue in state to preserve slider position (hex doesn't preserve hue for s=0 colors)
-  const [hue, setHue] = useState(baseHsl.h)
-  const hsl = { ...baseHsl, h: hue }
+  const [hue, setHue] = useState(baseHsv.h)
+  const hsv = { ...baseHsv, h: hue }
 
   useEffect(() => {
     setHexInput(value)
     // Only sync hue from hex if saturation > 0 (otherwise hue is meaningless in hex)
-    if (baseHsl.s > 0) {
-      setHue(baseHsl.h)
+    if (baseHsv.s > 0) {
+      setHue(baseHsv.h)
     }
-  }, [value, baseHsl.h, baseHsl.s])
+  }, [value, baseHsv.h, baseHsv.s])
 
   // Draw the colour gradient canvas
   useEffect(() => {
@@ -53,19 +53,19 @@ export function InlineColourPicker({
     // Horizontal saturation gradient (white to full colour)
     const satGradient = ctx.createLinearGradient(0, 0, width, 0)
     satGradient.addColorStop(0, 'white')
-    satGradient.addColorStop(1, `hsl(${hsl.h}, 100%, 50%)`)
+    satGradient.addColorStop(1, `hsl(${hsv.h}, 100%, 50%)`)
 
     ctx.fillStyle = satGradient
     ctx.fillRect(0, 0, width, height)
 
-    // Vertical lightness gradient (transparent to black)
-    const lightGradient = ctx.createLinearGradient(0, 0, 0, height)
-    lightGradient.addColorStop(0, 'rgba(0,0,0,0)')
-    lightGradient.addColorStop(1, 'black')
+    // Vertical value gradient (transparent to black)
+    const valueGradient = ctx.createLinearGradient(0, 0, 0, height)
+    valueGradient.addColorStop(0, 'rgba(0,0,0,0)')
+    valueGradient.addColorStop(1, 'black')
 
-    ctx.fillStyle = lightGradient
+    ctx.fillStyle = valueGradient
     ctx.fillRect(0, 0, width, height)
-  }, [hsl.h])
+  }, [hsv.h])
 
   const handleCanvasClick = useCallback(
     (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -77,22 +77,32 @@ export function InlineColourPicker({
       const y = e.clientY - rect.top
 
       const saturation = Math.round((x / rect.width) * 100)
-      const lightness = Math.round(100 - (y / rect.height) * 100)
+      const value = Math.round(100 - (y / rect.height) * 100)
 
-      const newHex = hslToHex({
-        h: hsl.h,
+      const newHex = hsvToHex({
+        h: hsv.h,
         s: Math.min(100, Math.max(0, saturation)),
-        l: Math.min(100, Math.max(0, lightness / 2 + 25)),
+        v: Math.min(100, Math.max(0, value)),
       })
 
       onChange(newHex)
     },
-    [hsl.h, onChange]
+    [hsv.h, onChange]
   )
 
   const handleHueChange = (h: number) => {
     setHue(h)
-    const newHex = hslToHex({ ...hsl, h })
+    const newHex = hsvToHex({ ...hsv, h })
+    onChange(newHex)
+  }
+
+  const handleSaturationChange = (s: number) => {
+    const newHex = hsvToHex({ ...hsv, s })
+    onChange(newHex)
+  }
+
+  const handleValueChange = (v: number) => {
+    const newHex = hsvToHex({ ...hsv, v })
     onChange(newHex)
   }
 
@@ -125,37 +135,63 @@ export function InlineColourPicker({
 
   return (
     <div className="p-3 bg-muted/30 rounded-lg space-y-3">
-      {/* Canvas picker */}
-      <div className="relative overflow-hidden rounded-lg">
-        <canvas
-          ref={canvasRef}
-          width={280}
-          height={120}
-          className="w-full h-28 cursor-crosshair border border-border rounded-lg"
-          onClick={handleCanvasClick}
-        />
-        {/* Current colour indicator */}
-        <div
-          className="absolute w-3 h-3 rounded-full border-2 border-white shadow-md pointer-events-none"
-          style={{
-            backgroundColor: value,
-            left: `${Math.min(100, Math.max(0, hsl.s))}%`,
-            top: `${Math.min(100, Math.max(0, 100 - hsl.l))}%`,
-            transform: 'translate(-50%, -50%)',
-          }}
-        />
+      {/* Canvas picker - outer padding prevents thumb clipping */}
+      <div className="p-2">
+        <div className="relative">
+          <canvas
+            ref={canvasRef}
+            width={280}
+            height={120}
+            className="w-full h-28 cursor-crosshair border border-border rounded-lg block"
+            onClick={handleCanvasClick}
+          />
+          {/* Current colour indicator */}
+          <div
+            className="absolute w-3.5 h-3.5 rounded-full border-2 border-white pointer-events-none"
+            style={{
+              backgroundColor: value,
+              left: `${hsv.s}%`,
+              top: `${100 - hsv.v}%`,
+              transform: 'translate(-50%, -50%)',
+              boxShadow: '0 0 0 1.5px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.3)',
+            }}
+          />
+        </div>
       </div>
 
-      {/* Hue slider */}
-      <Slider
-        value={hsl.h}
-        onChange={handleHueChange}
-        min={0}
-        max={359}
-        step={1}
-        label="Hue"
-        gradient="linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)"
-      />
+      {/* HSV sliders */}
+      <div className="space-y-2">
+        <Slider
+          value={hsv.h}
+          onChange={handleHueChange}
+          min={0}
+          max={359}
+          step={1}
+          label="Hue"
+          valueFormat={(v) => `${v}°`}
+          gradient="linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)"
+        />
+        <Slider
+          value={hsv.s}
+          onChange={handleSaturationChange}
+          min={0}
+          max={100}
+          step={1}
+          label="Saturation"
+          valueFormat={(v) => `${v}%`}
+          gradient={`linear-gradient(to right, ${hsvToHex({ h: hsv.h, s: 0, v: hsv.v })}, ${hsvToHex({ h: hsv.h, s: 100, v: hsv.v })})`}
+        />
+        <Slider
+          value={hsv.v}
+          onChange={handleValueChange}
+          min={0}
+          max={100}
+          step={1}
+          label="Brightness"
+          valueFormat={(v) => `${v}%`}
+          gradient={`linear-gradient(to right, ${hsvToHex({ h: hsv.h, s: hsv.s, v: 0 })}, ${hsvToHex({ h: hsv.h, s: hsv.s, v: 100 })})`}
+        />
+      </div>
 
       {/* Hex input and preview */}
       <div className="flex gap-2">

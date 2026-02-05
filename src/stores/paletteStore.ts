@@ -24,6 +24,7 @@ interface PaletteStore {
   reorderColours: (paletteId: string, category: ColourCategory, oldIndex: number, newIndex: number) => void
   moveColourToCategory: (paletteId: string, colourId: string, fromCategory: ColourCategory, toCategory: ColourCategory) => void
   toggleColourLock: (paletteId: string, colourId: string) => void
+  revertColour: (paletteId: string, colourId: string) => boolean
 
   // Gradient actions
   addGradient: (paletteId: string, gradient: Omit<Gradient, 'id' | 'createdAt'>) => void
@@ -227,11 +228,12 @@ export const usePaletteStore = create<PaletteStore>()(
                 colours: cat.colours.map((colour) => {
                   if (colour.id !== colourId) return colour
 
-                  // If hex is being updated, recalculate other colour formats
-                  if (updates.hex) {
+                  // If hex is being updated, recalculate other colour formats and save previous
+                  if (updates.hex && updates.hex.toLowerCase() !== colour.hex.toLowerCase()) {
                     return {
                       ...colour,
                       ...updates,
+                      previousHex: colour.hex,
                       hex: updates.hex.toLowerCase(),
                       rgb: hexToRgb(updates.hex),
                       hsl: hexToHsl(updates.hex),
@@ -339,6 +341,51 @@ export const usePaletteStore = create<PaletteStore>()(
             }
           }),
         }))
+      },
+
+      revertColour: (paletteId, colourId) => {
+        const palette = get().getPaletteById(paletteId)
+        if (!palette) return false
+
+        let found = false
+        for (const cat of palette.categories) {
+          const colour = cat.colours.find((c) => c.id === colourId)
+          if (colour?.previousHex) {
+            found = true
+            break
+          }
+        }
+
+        if (!found) return false
+
+        set((state) => ({
+          palettes: state.palettes.map((palette) => {
+            if (palette.id !== paletteId) return palette
+
+            return {
+              ...palette,
+              categories: palette.categories.map((cat) => ({
+                ...cat,
+                colours: cat.colours.map((colour) => {
+                  if (colour.id !== colourId || !colour.previousHex) return colour
+
+                  const previousHex = colour.previousHex
+                  return {
+                    ...colour,
+                    previousHex: colour.hex,
+                    hex: previousHex,
+                    rgb: hexToRgb(previousHex),
+                    hsl: hexToHsl(previousHex),
+                    oklch: hexToOklch(previousHex),
+                  }
+                }),
+              })),
+              updatedAt: Date.now(),
+            }
+          }),
+        }))
+
+        return true
       },
 
       addGradient: (paletteId, gradient) => {

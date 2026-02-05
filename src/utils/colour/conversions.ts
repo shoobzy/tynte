@@ -174,6 +174,14 @@ export function hsvToRgb(hsv: HSV): RGB {
   }
 }
 
+export function hexToHsv(hex: string): HSV {
+  return rgbToHsv(hexToRgb(hex))
+}
+
+export function hsvToHex(hsv: HSV): string {
+  return rgbToHex(hsvToRgb(hsv))
+}
+
 // LAB conversions (using D65 illuminant)
 export function rgbToLab(rgb: RGB): LAB {
   // RGB to XYZ

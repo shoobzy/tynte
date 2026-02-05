@@ -46,6 +46,7 @@ export function CategoryGroup({
     reorderColours,
     clearCategory,
     deleteCategory,
+    revertColour,
   } = usePaletteStore()
   const { setSelectedCategory, setPickerOpen } = useUIStore()
 
@@ -170,6 +171,7 @@ export function CategoryGroup({
                           onToggleLock={() =>
                             toggleColourLock(paletteId, colour.id)
                           }
+                          onRevert={() => revertColour(paletteId, colour.id)}
                         />
                       ))}
                     </div>

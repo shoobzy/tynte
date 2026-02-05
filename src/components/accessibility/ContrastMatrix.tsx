@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Check, X, AlertTriangle, ChevronDown, RefreshCw, Type, Square, Layers } from 'lucide-react'
+import { Check, X, AlertTriangle, ChevronDown, RefreshCw, Type, Square, Layers, Trash2 } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { usePaletteStore } from '../../stores/paletteStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -10,6 +10,7 @@ import {
   getWCAGLevel,
 } from '../../utils/colour/contrast'
 import { ColourRole } from '../../types/colour'
+import { categoryLabels } from '../../data/presets'
 
 export function ContrastMatrix() {
   const { palettes, activePaletteId, updateColour } = usePaletteStore()
@@ -94,6 +95,19 @@ function RoleAssignmentSection({ categoriesWithColours, onSetRole }: RoleAssignm
   // Flatten all colours for the role sections
   const allColours = categoriesWithColours.flatMap((cat) => cat.colours)
 
+  // Check if any colours have roles assigned
+  const hasAnyRoles = allColours.some((c) => c.role)
+
+  // Clear all roles
+  const handleClearAll = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    allColours.forEach((c) => {
+      if (c.role) {
+        onSetRole(c.id, undefined)
+      }
+    })
+  }
+
   // Handle toggling a colour in a section
   // - Clicking Text: toggle text role (can be combined with background → 'both')
   // - Clicking Background: toggle background role (can be combined with text → 'both')
@@ -126,21 +140,35 @@ function RoleAssignmentSection({ categoriesWithColours, onSetRole }: RoleAssignm
 
   return (
     <div className="border border-border rounded-lg overflow-hidden">
-      <button
+      <div
+        className="flex items-center justify-between px-4 py-3 bg-muted/30 cursor-pointer"
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between p-3 bg-card hover:bg-muted/50 transition-colors"
       >
         <div className="flex items-center gap-2">
+          <motion.div
+            animate={{ rotate: expanded ? 0 : -90 }}
+            transition={{ duration: 0.2 }}
+          >
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          </motion.div>
           <Layers className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium">Assign Colour Roles</span>
         </div>
-        <motion.div
-          animate={{ rotate: expanded ? 180 : 0 }}
-          transition={{ duration: 0.2 }}
-        >
-          <ChevronDown className="h-4 w-4 text-muted-foreground" />
-        </motion.div>
-      </button>
+
+        {hasAnyRoles && (
+          <div onClick={(e) => e.stopPropagation()}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleClearAll}
+              className="text-red-700 hover:text-red-800 dark:text-red-400 dark:hover:text-red-300"
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
+              Clear
+            </Button>
+          </div>
+        )}
+      </div>
 
       <AnimatePresence>
         {expanded && (
@@ -161,7 +189,7 @@ function RoleAssignmentSection({ categoriesWithColours, onSetRole }: RoleAssignm
                   title="Text Colours"
                   icon={<Type className="h-4 w-4" />}
                   targetRole="text"
-                  colours={allColours}
+                  categories={categoriesWithColours}
                   accentColour="blue"
                   onToggle={handleToggleRole}
                 />
@@ -171,7 +199,7 @@ function RoleAssignmentSection({ categoriesWithColours, onSetRole }: RoleAssignm
                   title="Background Colours"
                   icon={<Square className="h-4 w-4" />}
                   targetRole="background"
-                  colours={allColours}
+                  categories={categoriesWithColours}
                   accentColour="orange"
                   onToggle={handleToggleRole}
                 />
@@ -188,14 +216,17 @@ interface RoleSectionProps {
   title: string
   icon: React.ReactNode
   targetRole: 'text' | 'background'
-  colours: { id: string; hex: string; name: string; role?: ColourRole }[]
+  categories: { category: string; colours: { id: string; hex: string; name: string; role?: ColourRole }[] }[]
   accentColour: 'blue' | 'orange'
   onToggle: (colourId: string, toggleRole: 'text' | 'background', currentRole?: ColourRole) => void
 }
 
-function RoleSection({ title, icon, targetRole, colours, accentColour, onToggle }: RoleSectionProps) {
+function RoleSection({ title, icon, targetRole, categories, accentColour, onToggle }: RoleSectionProps) {
+  // Flatten colours for counting
+  const allColours = categories.flatMap((cat) => cat.colours)
+
   // Count colours that have this role (including 'both')
-  const selectedCount = colours.filter((c) =>
+  const selectedCount = allColours.filter((c) =>
     c.role === targetRole || c.role === 'both'
   ).length
 
@@ -244,26 +275,33 @@ function RoleSection({ title, icon, targetRole, colours, accentColour, onToggle 
           )}
         </div>
       </div>
-      <div className="p-3">
-        <div className="flex flex-wrap gap-2">
-          {colours.map((colour) => {
-            const selected = isSelected(colour.role)
+      <div className="p-3 space-y-3 max-h-64 overflow-y-auto">
+        {categories.map((category) => (
+          <div key={category.category}>
+            <label className="text-xs text-muted-foreground">
+              {categoryLabels[category.category] || category.category}
+            </label>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {category.colours.map((colour) => {
+                const selected = isSelected(colour.role)
 
-            return (
-              <button
-                key={colour.id}
-                onClick={() => onToggle(colour.id, targetRole, colour.role)}
-                className={`
-                  w-8 h-8 rounded-md transition-all hover:scale-110
-                  ${selected ? getRingClass() : 'border border-border'}
-                `}
-                style={{ backgroundColor: colour.hex }}
-                title={`${colour.name}${selected ? ' (selected)' : ''}`}
-              />
-            )
-          })}
-        </div>
-        {colours.length === 0 && (
+                return (
+                  <button
+                    key={colour.id}
+                    onClick={() => onToggle(colour.id, targetRole, colour.role)}
+                    className={`
+                      w-7 h-7 rounded-md transition-all hover:scale-110
+                      ${selected ? getRingClass() : 'border border-border'}
+                    `}
+                    style={{ backgroundColor: colour.hex }}
+                    title={`${colour.name}${selected ? ' (selected)' : ''}`}
+                  />
+                )
+              })}
+            </div>
+          </div>
+        ))}
+        {allColours.length === 0 && (
           <p className="text-xs text-muted-foreground text-center py-2">
             No colours in palette
           </p>

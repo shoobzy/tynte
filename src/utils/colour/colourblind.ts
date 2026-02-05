@@ -1,5 +1,6 @@
 import { RGB, ColourblindType } from '../../types/colour'
-import { hexToRgb, rgbToHex } from './conversions'
+import { hexToRgb, rgbToHex, hexToHsl, hslToHex } from './conversions'
+import { getContrastRatioFromHex } from './contrast'
 
 /**
  * Transformation matrices for different types of colour blindness
@@ -278,4 +279,95 @@ export function checkCategoryAccessibility(
   }
 
   return { byType, byCategory }
+}
+
+/**
+ * Suggest an accessible alternative colour for contrast issues
+ * Adjusts lightness to achieve target contrast ratio under CVD simulation
+ */
+export function suggestContrastFix(
+  textHex: string,
+  backgroundHex: string,
+  type: ColourblindType,
+  targetRatio: number = 4.5
+): { hex: string; adjustedLightness: number } | null {
+  const hsl = hexToHsl(textHex)
+  const originalLightness = hsl.l
+
+  // Determine direction: if text is lighter than mid, try darker; else try lighter
+  const bgHsl = hexToHsl(backgroundHex)
+  const shouldGoDarker = hsl.l > bgHsl.l
+
+  // Try adjusting lightness in steps
+  const step = 5
+  const maxAttempts = 20
+
+  for (let i = 1; i <= maxAttempts; i++) {
+    // Try going darker or lighter based on initial direction
+    const adjustments = shouldGoDarker
+      ? [-i * step, i * step]
+      : [i * step, -i * step]
+
+    for (const adjustment of adjustments) {
+      const newLightness = Math.min(100, Math.max(0, originalLightness + adjustment))
+      const newHex = hslToHex({ h: hsl.h, s: hsl.s, l: newLightness })
+
+      // Check contrast under simulation
+      const simulatedText = simulateColourblindness(newHex, type)
+      const simulatedBg = simulateColourblindness(backgroundHex, type)
+      const ratio = getContrastRatioFromHex(simulatedText, simulatedBg)
+
+      if (ratio >= targetRatio) {
+        return { hex: newHex, adjustedLightness: newLightness }
+      }
+    }
+  }
+
+  // If we couldn't find a good match, suggest extreme lightness
+  const extremeLight = shouldGoDarker ? 10 : 95
+  return {
+    hex: hslToHex({ h: hsl.h, s: hsl.s, l: extremeLight }),
+    adjustedLightness: extremeLight
+  }
+}
+
+/**
+ * Suggest an accessible alternative colour for distinguishability issues
+ * Adjusts lightness to make two colours more distinguishable under CVD simulation
+ */
+export function suggestDistinguishableFix(
+  colourToAdjust: string,
+  otherColour: string,
+  type: ColourblindType,
+  threshold: number = 25
+): { hex: string; adjustedLightness: number } | null {
+  const hsl = hexToHsl(colourToAdjust)
+  const otherHsl = hexToHsl(otherColour)
+  const originalLightness = hsl.l
+
+  // Determine direction based on which colour is lighter
+  const shouldGoDarker = hsl.l > otherHsl.l
+
+  // Try adjusting lightness in steps
+  const step = 5
+  const maxAttempts = 18
+
+  for (let i = 1; i <= maxAttempts; i++) {
+    // Try the preferred direction first, then opposite
+    const adjustments = shouldGoDarker
+      ? [-i * step, i * step]
+      : [i * step, -i * step]
+
+    for (const adjustment of adjustments) {
+      const newLightness = Math.min(95, Math.max(5, originalLightness + adjustment))
+      const newHex = hslToHex({ h: hsl.h, s: hsl.s, l: newLightness })
+
+      // Check if distinguishable under simulation
+      if (areColoursDistinguishable(newHex, otherColour, type, threshold)) {
+        return { hex: newHex, adjustedLightness: newLightness }
+      }
+    }
+  }
+
+  return null
 }

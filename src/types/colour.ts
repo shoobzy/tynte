@@ -49,6 +49,7 @@ export interface Colour {
   locked: boolean
   role?: ColourRole
   createdAt: number
+  previousHex?: string
 }
 
 export interface ColourStop {

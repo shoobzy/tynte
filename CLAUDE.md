@@ -84,6 +84,35 @@ src/
 
 ## Recent Work (Session Summary)
 
+### ColourCard Edit Mode Enhancement
+- Replaced basic `ColourInput` with full `InlineColourPicker` component
+- Edit mode now includes canvas picker, HSV sliders, hex input, and eye dropper
+- Provides much richer colour editing experience for individual palette colours
+
+### Colour Revert Functionality
+- Colours now track their previous hex value (`previousHex` field on Colour type)
+- When a colour is updated, the previous value is automatically saved
+- Revert button (undo icon) appears on colour cards that have a previous value
+- Clicking revert swaps current and previous values (can toggle back and forth)
+- Useful for reverting changes made via accessibility/colourblind suggestions
+- `revertColour` function added to paletteStore
+
+### InlineColourPicker Improvements
+- **HSV Conversion Fix**: Canvas now uses proper HSV (not HSL) for full colour range
+  - Previously limited to 25-75% lightness due to incorrect conversion
+  - Added `hexToHsv` and `hsvToHex` utility functions
+- **Canvas Thumb**: Added padding to prevent clipping at edges, darker outline for visibility on light colours
+- **HSV Sliders**: Added Saturation and Brightness sliders below the Hue slider
+  - Dynamic gradients show colour context as you adjust
+  - Provides precise control alongside the visual canvas picker
+- Eye dropper support (where browser supports it)
+- Palette colour swatches for quick selection
+- Optional "Done" button via `onClose` prop
+
+### Slider Component Improvements
+- Cursor changes to `grab` on hover, `grabbing` while dragging
+- Better visual feedback for drag interactions
+
 ### Component Preview
 - Base shade selection with clickable swatches (works with any scale size)
 - "Auto" option defaults to middle shade, or select specific shade
@@ -99,15 +128,6 @@ src/
 - Gradient name validation (required, duplicate check, error states)
 - Random gradient generation
 
-### Inline Colour Picker (Gradient Stops)
-- Replaced native HTML color input with custom picker
-- Canvas gradient picker with crosshair cursor
-- Hue slider with rainbow gradient
-- Hex input with live preview swatch
-- Eye dropper support (where available)
-- Palette colour swatches for quick selection
-- "Done" button to close picker
-
 ### UI Improvements
 - ConfirmModal for destructive actions
 - Modal improvements: portals, Escape key, scroll lock, scrollbar compensation
@@ -117,7 +137,11 @@ src/
 ## Known Patterns
 
 ### Colour Picker Usage
-The full `ColourPicker` component is in `src/components/palette/ColourPicker.tsx`. A simplified inline version `InlineColourPicker` is in `GradientGenerator.tsx` for gradient stops.
+- **ColourPicker** (`src/components/palette/ColourPicker.tsx`): Full-featured picker with canvas, RGB/HSL tabs, recent colours
+- **InlineColourPicker** (`src/components/ui/InlineColourPicker.tsx`): Shared component used in ColourCard edit mode and GradientGenerator. Uses HSV colour model with canvas picker + Hue/Saturation/Brightness sliders
+
+### Colour Revert Pattern
+Colours track `previousHex` to enable undo. The `revertColour` store action swaps current and previous values, allowing toggle between two states. Revert button only shows when `previousHex` exists.
 
 ### Component Preview Base Shade Selection
 The preview uses Primary category colours as the reference for shade selection. Base shade index applies to all categories. Uses `getOptimalTextColour()` from `utils/colour/contrast.ts` to determine if white or black text provides better contrast.
@@ -129,7 +153,14 @@ The preview uses Primary category colours as the reference for shade selection. 
 Use `useToast()` hook for notifications: `toast.success()`, `toast.error()`, `toast.warning()`
 
 ### Slider Component
-When using framer-motion `whileHover`/`whileTap` with positioned elements, separate the positioning (outer div with translate) from the animation (inner motion.div with scale) to prevent transform conflicts.
+When using framer-motion `whileHover`/`whileTap` with positioned elements, separate the positioning (outer div with translate) from the animation (inner motion.div with scale) to prevent transform conflicts. Sliders use `cursor-grab`/`cursor-grabbing` for drag feedback.
+
+### Colour Conversion Utilities
+Located in `src/utils/colour/conversions.ts`. Supports:
+- RGB, HSL, HSV, OKLCH, LAB, CMYK conversions
+- `hexToHsv` and `hsvToHex` for HSV-based colour pickers
+- Format strings: `formatRgb()`, `formatHsl()`, `formatOklch()`, `formatCmyk()`
+- Validation: `isValidHex()`, `normaliseHex()`, `parseColour()`
 
 ## Repository
 GitHub: https://github.com/shoobzy/tynte

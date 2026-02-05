@@ -192,7 +192,7 @@ export function AccessibilityReport() {
       overallScore,
       categoriesChecked: categoriesWithColours.length,
     }
-  }, [allColours, textColours, backgroundColours, hasRolesAssigned, categoriesWithColours])
+  }, [allColours, textColours, backgroundColours, hasRolesAssigned, categoriesWithColours, reviewedWarnings])
 
   const handleExportReport = () => {
     if (!report || !activePalette) return
@@ -372,7 +372,7 @@ export function AccessibilityReport() {
         {/* Contrast Score */}
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Contrast className="h-5 w-5 text-primary" />
+            <Contrast className="h-5 w-5 text-primary dark:text-violet-400" />
             <h4 className="font-medium">Contrast Score</h4>
           </div>
 
@@ -429,7 +429,7 @@ export function AccessibilityReport() {
         {/* Colourblind Score */}
         <div className="bg-card border border-border rounded-lg p-4">
           <div className="flex items-center gap-2 mb-3">
-            <Eye className="h-5 w-5 text-primary" />
+            <Eye className="h-5 w-5 text-primary dark:text-violet-400" />
             <h4 className="font-medium">Colourblind Compatibility</h4>
           </div>
 

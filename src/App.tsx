@@ -55,7 +55,11 @@ function App() {
                 Check contrast ratios and colour blindness compatibility
               </p>
             </div>
-            <Tabs value={accessibilityTab} onValueChange={(v) => setAccessibilityTab(v as any)}>
+            <Tabs value={accessibilityTab} onValueChange={(v) => {
+              if (v === 'contrast' || v === 'matrix' || v === 'colourblind' || v === 'report') {
+                setAccessibilityTab(v)
+              }
+            }}>
               <TabsList>
                 <TabsTrigger value="contrast">Contrast Checker</TabsTrigger>
                 <TabsTrigger value="matrix">Contrast Matrix</TabsTrigger>
@@ -95,7 +99,11 @@ function App() {
                 Generate harmonies, scales, gradients, and extract colours from images
               </p>
             </div>
-            <Tabs value={generatorTab} onValueChange={(v) => setGeneratorTab(v as any)}>
+            <Tabs value={generatorTab} onValueChange={(v) => {
+              if (v === 'harmony' || v === 'scale' || v === 'gradient' || v === 'extract') {
+                setGeneratorTab(v)
+              }
+            }}>
               <TabsList>
                 <TabsTrigger value="harmony">Harmony</TabsTrigger>
                 <TabsTrigger value="scale">Scale</TabsTrigger>

@@ -305,7 +305,7 @@ export function AccessibilityReport() {
   if (!activePalette || allColours.length < 2) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <Info className="h-12 w-12 mx-auto mb-4 text-icon-muted" />
         <p>Add at least 2 colours to your palette to generate an accessibility report</p>
       </div>
     )

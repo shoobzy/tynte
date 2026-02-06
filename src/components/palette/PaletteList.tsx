@@ -35,7 +35,7 @@ export function PaletteList({ showFavouritesOnly = false }: PaletteListProps) {
   if (sortedPalettes.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-16 text-center">
-        <Palette className="h-16 w-16 text-muted-foreground/50 mb-4" />
+        <Palette className="h-16 w-16 text-icon-muted mb-4" />
         <h3 className="text-lg font-medium mb-2">
           {showFavouritesOnly ? 'No favourite palettes' : 'No palettes yet'}
         </h3>
@@ -107,7 +107,7 @@ export function PaletteList({ showFavouritesOnly = false }: PaletteListProps) {
                     ))
                   ) : (
                     <div className="w-full bg-muted flex items-center justify-center">
-                      <Palette className="h-8 w-8 text-muted-foreground/30" />
+                      <Palette className="h-8 w-8 text-icon-muted" />
                     </div>
                   )}
                 </div>

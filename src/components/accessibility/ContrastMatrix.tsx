@@ -48,7 +48,7 @@ export function ContrastMatrix() {
   if (allColours.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <AlertTriangle className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <AlertTriangle className="h-12 w-12 mx-auto mb-4 text-icon-muted" />
         <p>Add colours to your palette to see the contrast matrix</p>
       </div>
     )

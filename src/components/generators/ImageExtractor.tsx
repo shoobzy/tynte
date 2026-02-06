@@ -200,7 +200,7 @@ export function ImageExtractor() {
             onChange={handleFileChange}
             className="hidden"
           />
-          <Upload className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+          <Upload className="h-12 w-12 mx-auto text-icon-muted mb-4" />
           <p className="text-lg font-medium mb-2">Drop an image here</p>
           <p className="text-sm text-muted-foreground">
             or click to browse your files
@@ -335,7 +335,7 @@ export function ImageExtractor() {
       {/* Empty state */}
       {!image && !isLoading && (
         <div className="text-center py-4 text-muted-foreground text-sm">
-          <ImageIcon className="h-8 w-8 mx-auto mb-2 opacity-50" />
+          <ImageIcon className="h-8 w-8 mx-auto mb-2 text-icon-muted" />
           <p>Upload an image to extract its dominant colours</p>
         </div>
       )}

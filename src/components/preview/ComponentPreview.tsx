@@ -99,7 +99,7 @@ export function ComponentPreview() {
   if (!activePalette) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <PaletteIcon className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <PaletteIcon className="h-12 w-12 mx-auto mb-4 text-icon-muted" />
         <p>Select or create a palette to preview components</p>
       </div>
     )

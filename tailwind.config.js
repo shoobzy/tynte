@@ -37,6 +37,7 @@ export default {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
         },
+        'icon-muted': 'hsl(var(--icon-muted))',
       },
       borderRadius: {
         lg: 'var(--radius)',

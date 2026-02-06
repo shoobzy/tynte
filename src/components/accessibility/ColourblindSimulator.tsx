@@ -114,7 +114,7 @@ export function ColourblindSimulator() {
   if (colours.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
-        <Eye className="h-12 w-12 mx-auto mb-4 opacity-50" />
+        <Eye className="h-12 w-12 mx-auto mb-4 text-icon-muted" />
         <p>Add colours to your palette to simulate colour blindness</p>
       </div>
     )

@@ -128,7 +128,7 @@ export function Sidebar() {
               <div className="space-y-1">
                 {sortedPalettes.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground text-sm">
-                    <Palette className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                    <Palette className="h-8 w-8 mx-auto mb-2 text-icon-muted" />
                     <p>No palettes yet</p>
                     <p className="text-xs mt-1">Create your first palette</p>
                   </div>

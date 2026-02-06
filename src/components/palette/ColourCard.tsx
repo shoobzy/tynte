@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, memo } from 'react'
-import { motion } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import {
@@ -47,6 +47,7 @@ export const ColourCard = memo(function ColourCard({
   const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
   const toast = useToast()
   const setHasUnsavedEdits = useUIStore((state) => state.setHasUnsavedEdits)
+  const prefersReducedMotion = useReducedMotion()
 
   // Sync edit state when colour changes externally (e.g., from colourblind suggestions)
   useEffect(() => {
@@ -125,6 +126,9 @@ export const ColourCard = memo(function ColourCard({
       <>
         <motion.div
           layout
+          initial={prefersReducedMotion ? {} : { opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: prefersReducedMotion ? 0 : 0.15 }}
           className="bg-card border border-border rounded-lg p-3 space-y-3"
         >
           <Input
@@ -133,12 +137,18 @@ export const ColourCard = memo(function ColourCard({
             placeholder="Colour name"
             className="h-8 text-sm"
           />
-          <InlineColourPicker
-            value={editHex}
-            onChange={setEditHex}
-            onError={(msg) => toast.error(msg)}
-            onSuccess={(msg) => toast.success(msg)}
-          />
+          <motion.div
+            initial={prefersReducedMotion ? {} : { opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: prefersReducedMotion ? 0 : 0.2, delay: prefersReducedMotion ? 0 : 0.05 }}
+          >
+            <InlineColourPicker
+              value={editHex}
+              onChange={setEditHex}
+              onError={(msg) => toast.error(msg)}
+              onSuccess={(msg) => toast.success(msg)}
+            />
+          </motion.div>
           <div className="flex gap-2 justify-end">
             <Button variant="ghost" size="sm" onClick={handleCancelEdit}>
               <X className="h-4 w-4 mr-1" />

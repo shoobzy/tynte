@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Plus, Copy, RefreshCw, ChevronDown } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../ui/Tabs'
@@ -28,6 +28,7 @@ export function ScaleGenerator() {
   const { scaleBaseColour, setScaleBaseColour, setGeneratedScale } = useUIStore()
   const { palettes, activePaletteId, addColoursToCategory } = usePaletteStore()
   const toast = useToast()
+  const prefersReducedMotion = useReducedMotion()
 
   const [method, setMethod] = useState<'oklch' | 'hsl'>('oklch')
   const [customSteps, setCustomSteps] = useState(11)
@@ -153,10 +154,10 @@ export function ScaleGenerator() {
         <AnimatePresence>
           {pickerExpanded && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
+              initial={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
               className="border-t border-border"
             >
               <InlineColourPicker

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Check, X, ChevronDown } from 'lucide-react'
 import { getContrastResult, formatContrastRatio, getWCAGLevel } from '../../../utils/colour/contrast'
 import { isValidHex, normaliseHex } from '../../../utils/colour/conversions'
@@ -13,9 +13,10 @@ interface ColourPickerButtonProps {
 
 function ColourPickerButton({ label, value, onChange }: ColourPickerButtonProps) {
   const [isExpanded, setIsExpanded] = useState(false)
+  const prefersReducedMotion = useReducedMotion()
 
   return (
-    <div>
+    <div className="relative">
       <label className="block text-sm font-medium mb-2">{label}</label>
       <button
         onClick={() => setIsExpanded(!isExpanded)}
@@ -28,11 +29,28 @@ function ColourPickerButton({ label, value, onChange }: ColourPickerButtonProps)
         <span className="flex-1 text-left font-mono text-sm uppercase">{value}</span>
         <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
       </button>
-      {isExpanded && (
-        <div className="pt-2">
-          <InlineColourPicker value={value} onChange={onChange} />
-        </div>
-      )}
+      <AnimatePresence>
+        {isExpanded && (
+          <>
+            {/* Backdrop to close on click outside */}
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setIsExpanded(false)}
+            />
+            <motion.div
+              initial={prefersReducedMotion ? { opacity: 1 } : { opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={prefersReducedMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+              className="absolute top-full left-0 right-0 z-20 pt-2"
+            >
+              <div className="border border-border rounded-lg bg-card shadow-lg">
+                <InlineColourPicker value={value} onChange={onChange} />
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

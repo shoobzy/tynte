@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Plus, Copy, Trash2, RefreshCw, ChevronDown } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { Slider } from '../ui/Slider'
@@ -22,6 +22,7 @@ const gradientTypeOptions = [
 export function GradientGenerator() {
   const { palettes, activePaletteId, addGradient } = usePaletteStore()
   const toast = useToast()
+  const prefersReducedMotion = useReducedMotion()
 
   const activePalette = palettes.find((p) => p.id === activePaletteId)
 
@@ -307,10 +308,10 @@ export function GradientGenerator() {
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
-                        initial={{ height: 0, opacity: 0 }}
+                        initial={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
                         animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
+                        transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
                         className="border-t border-border"
                       >
                         <InlineColourPicker

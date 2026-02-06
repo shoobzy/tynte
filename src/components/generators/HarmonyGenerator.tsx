@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { motion, AnimatePresence, useReducedMotion } from 'framer-motion'
 import { Plus, Copy, RefreshCw, ChevronDown } from 'lucide-react'
 import { Button } from '../ui/Button'
 import { useToast } from '../ui/Toast'
@@ -29,6 +29,7 @@ export function HarmonyGenerator() {
 
   const { palettes, activePaletteId, addColoursToCategory } = usePaletteStore()
   const toast = useToast()
+  const prefersReducedMotion = useReducedMotion()
 
   const [generatedColours, setGeneratedColours] = useState<string[]>([])
   const [showCategoryModal, setShowCategoryModal] = useState(false)
@@ -123,10 +124,10 @@ export function HarmonyGenerator() {
         <AnimatePresence>
           {pickerExpanded && (
             <motion.div
-              initial={{ height: 0, opacity: 0 }}
+              initial={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
+              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
               className="border-t border-border"
             >
               <InlineColourPicker

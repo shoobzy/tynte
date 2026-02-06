@@ -172,7 +172,7 @@ export function Slider({
         >
           <motion.div
             className={`
-              w-4 h-4 rounded-full bg-white border-2 border-primary
+              w-6 h-6 sm:w-4 sm:h-4 rounded-full bg-white border-2 border-primary
               shadow-sm
               ${disabled ? '' : 'cursor-grab active:cursor-grabbing'}
             `}
@@ -304,7 +304,7 @@ export function RangeSlider({
           >
             <motion.div
               className={`
-                w-4 h-4 rounded-full bg-white border-2 border-primary
+                w-6 h-6 sm:w-4 sm:h-4 rounded-full bg-white border-2 border-primary
                 shadow-sm
                 ${disabled ? '' : 'cursor-grab active:cursor-grabbing'}
               `}

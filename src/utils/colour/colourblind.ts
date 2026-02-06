@@ -318,12 +318,11 @@ export function checkCategoryAccessibility(
   ]
 
   // Initialize results
-  const byType: Record<ColourblindType, { accessible: boolean; problematicPairs: { hex1: string; hex2: string; category: string }[] }> = {} as any
+  const byType = types.reduce((acc, type) => {
+    acc[type] = { accessible: true, problematicPairs: [] }
+    return acc
+  }, {} as Record<ColourblindType, { accessible: boolean; problematicPairs: { hex1: string; hex2: string; category: string }[] }>)
   const byCategory: Record<string, Record<ColourblindType, { accessible: boolean; problematicPairs: [string, string][] }>> = {}
-
-  for (const type of types) {
-    byType[type] = { accessible: true, problematicPairs: [] }
-  }
 
   // Check each category separately
   for (const category of categories) {

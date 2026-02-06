@@ -144,8 +144,11 @@ export function InlineColourPicker({
       const result = await eyeDropper.open()
       onChange(result.sRGBHex)
       onSuccess?.('Colour picked')
-    } catch {
-      // User cancelled
+    } catch (error) {
+      // Only ignore AbortError (user cancelled), report other errors
+      if (error instanceof Error && error.name !== 'AbortError') {
+        onError?.('Failed to pick colour')
+      }
     }
   }
 
@@ -222,7 +225,7 @@ export function InlineColourPicker({
           style={{ backgroundColor: value }}
         />
         {supportsEyeDropper() && (
-          <Button variant="outline" size="icon" onClick={handleEyeDropper} className="h-9 w-9 min-w-9" title="Pick from screen">
+          <Button variant="outline" size="icon" onClick={handleEyeDropper} className="h-9 w-9 min-w-9" title="Pick from screen" aria-label="Pick colour from screen">
             <Pipette className="h-4 w-4" />
           </Button>
         )}

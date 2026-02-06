@@ -90,7 +90,7 @@ export function Header() {
 
           <DropdownMenu
             trigger={
-              <Button variant="ghost" size="icon" title="Theme">
+              <Button variant="ghost" size="icon" title="Theme" aria-label="Change theme">
                 {getThemeIcon()}
               </Button>
             }

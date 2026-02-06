@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   DndContext,
@@ -74,11 +74,11 @@ export function CategoryGroup({
     }
   }
 
-  const handleAddColour = () => {
+  const handleAddColour = useCallback(() => {
     setSelectedCategory(category.category)
     setPickerOpen(true)
     onAddColour()
-  }
+  }, [category.category, setSelectedCategory, setPickerOpen, onAddColour])
 
   const hasColours = category.colours.length > 0
 

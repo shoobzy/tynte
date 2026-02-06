@@ -295,7 +295,7 @@ export function PaletteManager() {
                 className="h-9 w-64"
                 autoFocus
               />
-              <Button variant="ghost" size="icon" onClick={handleSaveName} title="Save">
+              <Button variant="ghost" size="icon" onClick={handleSaveName} title="Save" aria-label="Save palette name">
                 <Check className="h-4 w-4" />
               </Button>
               <Button
@@ -303,6 +303,7 @@ export function PaletteManager() {
                 size="icon"
                 onClick={handleCancelNameEdit}
                 title="Cancel"
+                aria-label="Cancel editing"
               >
                 <X className="h-4 w-4" />
               </Button>

@@ -263,6 +263,12 @@ The landing page at `/` includes:
 - `CTASection` - Call to action
 - `Footer` - Links and branding
 
+**HeroSection responsive behaviour:**
+- Mobile (< 768px): Title, subtitle, and buttons only - showcases hidden, content vertically centered
+- Tablet/Desktop (768px+): Showcases (palette and scale cards) appear side-by-side below buttons
+- Floating UI elements only visible on lg (1024px+) and xl (1280px+) screens
+- Bottom margins on content containers only apply at md+ to maintain vertical centering on mobile
+
 ### PaletteManager Welcome State
 When no palettes exist, PaletteManager shows a welcome state with:
 - Hero section with "Welcome to Tynte" and CTA buttons

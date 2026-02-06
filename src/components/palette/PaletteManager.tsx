@@ -224,7 +224,7 @@ export function PaletteManager() {
             A professional colour palette generator for designers and developers.
             Build accessible, beautiful colour systems.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button size="lg" onClick={() => createPalette('My First Palette')}>
               <Plus className="h-4 w-4 mr-2" />
               Create Palette

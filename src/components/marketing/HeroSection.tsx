@@ -304,7 +304,7 @@ export function HeroSection() {
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-12">
+        <div className="text-center md:mb-12">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -332,7 +332,7 @@ export function HeroSection() {
           </motion.p>
 
           <motion.div
-            className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
+            className="flex flex-col sm:flex-row items-center justify-center gap-4 md:mb-16"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.4 }}
@@ -348,8 +348,8 @@ export function HeroSection() {
           </motion.div>
         </div>
 
-        {/* Showcases */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
+        {/* Showcases - hidden on mobile */}
+        <div className="hidden md:grid md:grid-cols-2 gap-6 max-w-5xl mx-auto">
           {/* Colour palette showcase */}
           <motion.div
             className="relative"

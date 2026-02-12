@@ -112,66 +112,6 @@ export function ScaleGenerator() {
 
   return (
     <div className="space-y-6">
-      {/* Base colour input */}
-      <div className="rounded-lg border border-border bg-card overflow-hidden">
-        <div
-          className="flex items-center justify-between p-3 cursor-pointer"
-          onClick={() => setPickerExpanded(!pickerExpanded)}
-        >
-          <div className="flex items-center gap-3">
-            <div
-              className="w-10 h-10 rounded-md border border-border"
-              style={{ backgroundColor: scaleBaseColour }}
-            />
-            <div>
-              <label className="text-sm font-medium">Base Colour</label>
-              <p className="text-xs font-mono text-muted-foreground">
-                {scaleBaseColour.toUpperCase()}
-              </p>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleRandomBase()
-              }}
-            >
-              <RefreshCw className="h-3.5 w-3.5 mr-1" />
-              Random
-            </Button>
-            <motion.div
-              animate={{ rotate: pickerExpanded ? 180 : 0 }}
-              transition={{ duration: 0.2 }}
-            >
-              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-            </motion.div>
-          </div>
-        </div>
-
-        <AnimatePresence>
-          {pickerExpanded && (
-            <motion.div
-              initial={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
-              transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
-              className="border-t border-border"
-            >
-              <InlineColourPicker
-                value={scaleBaseColour}
-                onChange={setScaleBaseColour}
-                paletteColourGroups={paletteColourGroups}
-                onError={(msg) => toast.error(msg)}
-                onSuccess={(msg) => toast.success(msg)}
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
       {/* Method selector */}
       <div className="flex items-center gap-4">
         <label className="text-sm font-medium">Generation Method</label>
@@ -333,6 +273,64 @@ export function ScaleGenerator() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Base colour input */}
+      <div className="rounded-lg border border-border bg-card overflow-hidden">
+        <div
+          className="flex items-center justify-between p-3 cursor-pointer"
+          onClick={() => setPickerExpanded(!pickerExpanded)}
+        >
+          <div className="flex items-center gap-3">
+            <motion.div
+              animate={{ rotate: pickerExpanded ? 0 : -90 }}
+              transition={{ duration: 0.2 }}
+            >
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
+            </motion.div>
+            <div
+              className="w-10 h-10 rounded-md border border-border"
+              style={{ backgroundColor: scaleBaseColour }}
+            />
+            <div>
+              <label className="text-sm font-medium">Base Colour</label>
+              <p className="text-xs font-mono text-muted-foreground">
+                {scaleBaseColour.toUpperCase()}
+              </p>
+            </div>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleRandomBase()
+            }}
+          >
+            <RefreshCw className="h-3.5 w-3.5 mr-1" />
+            Random
+          </Button>
+        </div>
+
+        <AnimatePresence>
+          {pickerExpanded && (
+            <motion.div
+              initial={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={prefersReducedMotion ? {} : { height: 0, opacity: 0 }}
+              transition={{ duration: prefersReducedMotion ? 0 : 0.2 }}
+              className="border-t border-border"
+            >
+              <InlineColourPicker
+                value={scaleBaseColour}
+                onChange={setScaleBaseColour}
+                paletteColourGroups={paletteColourGroups}
+                onError={(msg) => toast.error(msg)}
+                onSuccess={(msg) => toast.success(msg)}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <CategorySelectModal
         isOpen={showCategoryModal}

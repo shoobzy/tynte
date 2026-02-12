@@ -285,7 +285,7 @@ export function GradientGenerator() {
                       title="Edit colour"
                     >
                       <motion.div
-                        animate={{ rotate: isExpanded ? 180 : 0 }}
+                        animate={{ rotate: isExpanded ? 0 : -90 }}
                         transition={{ duration: 0.2 }}
                       >
                         <ChevronDown className="h-3.5 w-3.5" />

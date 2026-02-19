@@ -102,6 +102,12 @@ src/
 
 ## Recent Work (Session Summary)
 
+### OKLCH Prominence in UI
+- **ColourCard**: OKLCH values now displayed as a fourth click-to-copy format alongside hex, RGB, and HSL in the details section. Uses `formatOklch(colour.oklch)` from conversions utility.
+- **ScaleGenerator**: Method selector label ("Generation Method") is on its own row with toggle buttons and explanatory text stacked below. Explanation text changes dynamically based on selected method (OKLCH vs HSL).
+- **ColourScale**: Detail grid shows OKLCH values below hex for each scale step using `text-[10px]` and `text-muted-foreground/70` for visual hierarchy.
+- **HarmonyGenerator**: Colour detail cells show OKLCH values below hex using the same `text-[10px]` pattern as ColourScale.
+
 ### ColourCard Edit Mode Enhancement
 - Replaced basic `ColourInput` with full `InlineColourPicker` component
 - Edit mode now includes canvas picker, HSV sliders, hex input, and eye dropper

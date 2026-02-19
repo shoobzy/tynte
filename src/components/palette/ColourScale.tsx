@@ -6,6 +6,7 @@ import { useToast } from '../ui/Toast'
 import { ColourScale as ColourScaleType } from '../../types/palette'
 import { copyToClipboard } from '../../utils/helpers'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
+import { hexToOklch, formatOklch } from '../../utils/colour/conversions'
 import { scaleStepNames } from '../../utils/colour/scales'
 
 interface ColourScaleProps {
@@ -117,6 +118,9 @@ export function ColourScale({ scale, name, onAddToPalette }: ColourScaleProps) {
                 <div className="text-xs font-medium">{step}</div>
                 <div className="text-xs font-mono text-muted-foreground truncate">
                   {hex.toUpperCase()}
+                </div>
+                <div className="text-[10px] font-mono text-muted-foreground/70 truncate">
+                  {formatOklch(hexToOklch(hex))}
                 </div>
               </div>
             </div>

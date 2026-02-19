@@ -22,7 +22,7 @@ import { useToast } from '../ui/Toast'
 import { useUIStore } from '../../stores/uiStore'
 import { copyToClipboard } from '../../utils/helpers'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
-import { formatRgb, formatHsl } from '../../utils/colour/conversions'
+import { formatRgb, formatHsl, formatOklch } from '../../utils/colour/conversions'
 
 interface ColourCardProps {
   colour: Colour
@@ -314,6 +314,12 @@ export const ColourCard = memo(function ColourCard({
             onClick={() => handleCopy(formatHsl(colour.hsl), 'HSL')}
           >
             {formatHsl(colour.hsl)}
+          </div>
+          <div
+            className="text-xs text-muted-foreground cursor-pointer hover:text-foreground"
+            onClick={() => handleCopy(formatOklch(colour.oklch), 'OKLCH')}
+          >
+            {formatOklch(colour.oklch)}
           </div>
         </div>
       )}

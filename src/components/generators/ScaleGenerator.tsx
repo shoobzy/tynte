@@ -113,7 +113,7 @@ export function ScaleGenerator() {
   return (
     <div className="space-y-6">
       {/* Method selector */}
-      <div className="flex items-center gap-4">
+      <div className="space-y-3">
         <label className="text-sm font-medium">Generation Method</label>
         <div className="flex gap-2">
           <Button
@@ -131,6 +131,11 @@ export function ScaleGenerator() {
             HSL (Traditional)
           </Button>
         </div>
+        <p className="text-sm text-muted-foreground">
+          {method === 'oklch'
+            ? 'OKLCH produces perceptually uniform scales \u2014 lightness steps look evenly spaced to the human eye, resulting in more natural colour ramps.'
+            : 'HSL distributes lightness mathematically, which can produce uneven visual steps. Some shades may appear to jump in brightness.'}
+        </p>
       </div>
 
       {/* Main scale */}

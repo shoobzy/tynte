@@ -14,6 +14,7 @@ import {
   generateRandomColour,
 } from '../../utils/colour/harmony'
 import { getOptimalTextColour } from '../../utils/colour/contrast'
+import { hexToOklch, formatOklch } from '../../utils/colour/conversions'
 import { copyToClipboard } from '../../utils/helpers'
 import { ColourHarmony } from '../../types/colour'
 import { ColourCategory } from '../../types/palette'
@@ -179,9 +180,14 @@ export function HarmonyGenerator() {
                 className="w-8 h-8 rounded-md flex-shrink-0"
                 style={{ backgroundColor: colour }}
               />
-              <span className="text-xs font-mono truncate">
-                {colour.toUpperCase()}
-              </span>
+              <div className="min-w-0">
+                <div className="text-xs font-mono truncate">
+                  {colour.toUpperCase()}
+                </div>
+                <div className="text-[10px] font-mono text-muted-foreground/70 truncate">
+                  {formatOklch(hexToOklch(colour))}
+                </div>
+              </div>
             </div>
           ))}
         </div>

@@ -102,6 +102,10 @@ src/
 
 ## Recent Work (Session Summary)
 
+### Homepage A11y Fixes
+- **FeatureHighlights**: Changed card titles from `h3` to `h2` to fix heading hierarchy (was skipping from `h1` to `h3`)
+- **ShadeGeneratorDemo**: Changed hex label opacity from `opacity-80` to `opacity-90` to meet WCAG AA 4.5:1 contrast ratio
+
 ### OKLCH Prominence in UI
 - **ColourCard**: OKLCH values now displayed as a fourth click-to-copy format alongside hex, RGB, and HSL in the details section. Uses `formatOklch(colour.oklch)` from conversions utility.
 - **ScaleGenerator**: Method selector label ("Generation Method") is on its own row with toggle buttons and explanatory text stacked below. Explanation text changes dynamically based on selected method (OKLCH vs HSL).

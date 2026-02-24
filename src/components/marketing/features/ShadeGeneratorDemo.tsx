@@ -92,7 +92,7 @@ export function ShadeGeneratorDemo() {
                 whileHover={{ scale: 1.02 }}
               >
                 <p className="text-lg font-semibold">{step}</p>
-                <p className="text-xs font-mono opacity-80">{colour}</p>
+                <p className="text-xs font-mono opacity-90">{colour}</p>
               </motion.div>
             )
           })}

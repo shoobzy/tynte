@@ -52,7 +52,7 @@ export function FeatureHighlights() {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-semibold mb-2">{feature.title}</h3>
+                <h2 className="text-lg font-semibold mb-2">{feature.title}</h2>
 
                 <p className="text-sm text-muted-foreground leading-relaxed flex-1">
                   {feature.description}

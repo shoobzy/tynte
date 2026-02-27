@@ -1,4 +1,5 @@
 import { Sun, Moon, Menu, Download, Plus, Monitor } from 'lucide-react'
+import { Link } from 'react-router-dom'
 import { Button } from '../ui/Button'
 import { usePreferencesStore } from '../../stores/preferencesStore'
 import { useUIStore } from '../../stores/uiStore'
@@ -37,12 +38,10 @@ export function Header() {
             <Menu className="h-5 w-5" />
           </Button>
 
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">T</span>
-            </div>
-            <h1 className="font-semibold text-lg hidden sm:block">Tynte</h1>
-          </div>
+          <Link to="/" className="flex items-center gap-2">
+            <img src="/logo--light.svg" alt="Tynte" className="h-7 dark:hidden" />
+            <img src="/logo--dark.svg" alt="Tynte" className="h-7 hidden dark:block" />
+          </Link>
 
           {activePalette && (
             <>

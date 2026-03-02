@@ -102,6 +102,14 @@ src/
 
 ## Recent Work (Session Summary)
 
+### SVG Logo Branding
+- Replaced inline "T" icon + text branding with actual SVG logo files across all components
+- **Assets**: `public/logo--light.svg` (light mode), `public/logo--dark.svg` (dark mode), `public/favicon.svg` (updated favicon)
+- **Theme switching**: Uses CSS classes — `dark:hidden` / `hidden dark:block` to swap between light and dark logos instantly
+- **Components updated**: Header, MarketingNav, Footer
+- **Header logo**: Wrapped in `<Link to="/">` so it navigates to the homepage from `/app`
+- Logo heights: `h-7` in Header, `h-8` in MarketingNav and Footer
+
 ### Homepage A11y Fixes
 - **FeatureHighlights**: Changed card titles from `h3` to `h2` to fix heading hierarchy (was skipping from `h1` to `h3`)
 - **ShadeGeneratorDemo**: Changed hex label opacity from `opacity-80` to `opacity-90` to meet WCAG AA 4.5:1 contrast ratio
@@ -263,6 +271,9 @@ Located in `src/utils/colour/conversions.ts`. Supports:
 - `hexToHsv` and `hsvToHex` for HSV-based colour pickers
 - Format strings: `formatRgb()`, `formatHsl()`, `formatOklch()`, `formatCmyk()`
 - Validation: `isValidHex()`, `normaliseHex()`, `parseColour()`
+
+### Logo / Branding Pattern
+SVG logos in `public/` with light/dark variants. Use paired `<img>` tags with `dark:hidden` and `hidden dark:block` classes to swap based on theme. No JS needed — reacts to the `.dark` class on `<html>`. Header logo links to `/` via React Router `<Link>`.
 
 ### Marketing Homepage
 The landing page at `/` includes:
